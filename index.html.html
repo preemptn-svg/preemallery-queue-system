@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Preemallery Studio - ระบบลงคิวงานและสรุปยอด (Supabase Edition)</title>
+    <title>Preemallery Studio - ระบบลงคิวงานและสรุปยอด</title>
 
     <!-- PWA / Mobile Home Screen Settings -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -119,25 +119,6 @@
                 <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Logo" class="w-12 h-12 rounded-2xl object-cover mx-auto mb-1 border border-brown-200 shadow-sm">
                 <h3 class="text-base font-bold text-brown-800">Preemallery Studio</h3>
                 <p class="text-[11px] text-gray-400">เข้าสู่ระบบผ่าน Supabase Authentication</p>
-            </div>
-
-            <!-- ฟอร์มตั้งค่า Supabase Project -->
-            <div id="supabaseConfigSection" class="mb-3.5 p-2.5 bg-brown-50 rounded-2xl border border-brown-200 text-left">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-[11px] font-bold text-brown-700">ตั้งค่าการเชื่อมต่อ Supabase</span>
-                    <button type="button" onclick="toggleSupabaseConfigInputs()" class="text-[10px] text-brown-500 underline">ซ่อน/แสดง</button>
-                </div>
-                <div id="supabaseInputsContainer" class="space-y-2 mt-2">
-                    <div>
-                        <label class="block text-[10px] text-gray-600 mb-0.5">Supabase URL</label>
-                        <input type="text" id="sbUrlInput" placeholder="https://xxxx.supabase.co" class="w-full px-2.5 py-1.5 border border-brown-200 rounded-lg text-[11px] bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] text-gray-600 mb-0.5">Supabase Anon Key</label>
-                        <input type="password" id="sbKeyInput" placeholder="eyJhbGci..." class="w-full px-2.5 py-1.5 border border-brown-200 rounded-lg text-[11px] bg-white">
-                    </div>
-                    <button type="button" onclick="saveSupabaseConfig()" class="w-full py-1.5 bg-brown-600 text-white rounded-lg text-[11px] font-medium">บันทึกการตั้งค่า Supabase</button>
-                </div>
             </div>
 
             <form onsubmit="handleLogin(event)" class="space-y-3">
@@ -486,7 +467,7 @@
     </div>
 
     <script>
-        // Supabase Initialization & Configuration
+        // Supabase Initialization & Configuration (Hidden from UI)
         let supabaseUrl = localStorage.getItem('sb_url') || 'https://zlumthwpdgcnyvigygyu.supabase.co';
         let supabaseKey = localStorage.getItem('sb_key') || 'sb_publishable_7lEXqG9AhC_hSSAVhUMViw_qDM84Giu';
         let supabaseClient = null;
@@ -497,28 +478,8 @@
             }
         }
 
-        function toggleSupabaseConfigInputs() {
-            const container = document.getElementById('supabaseInputsContainer');
-            container.classList.toggle('hidden');
-        }
-
-        function saveSupabaseConfig() {
-            supabaseUrl = document.getElementById('sbUrlInput').value.trim();
-            supabaseKey = document.getElementById('sbKeyInput').value.trim();
-            if (supabaseUrl && supabaseKey) {
-                localStorage.setItem('sb_url', supabaseUrl);
-                localStorage.setItem('sb_key', supabaseKey);
-                initSupabase();
-                showToast('บันทึกการตั้งค่า Supabase เรียบร้อยแล้ว');
-            } else {
-                showToast('กรุณากรอก URL และ Anon Key ให้ครบถ้วน', 'warning');
-            }
-        }
-
-        // โหลดค่าลงฟอร์มตั้งค่าเริ่มต้นถ้ามี
+        // โหลดค่าตั้งค่าเริ่มต้นอัตโนมัติ
         window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('sbUrlInput').value = supabaseUrl;
-            document.getElementById('sbKeyInput').value = supabaseKey;
             initSupabase();
 
             setTimeout(() => {
