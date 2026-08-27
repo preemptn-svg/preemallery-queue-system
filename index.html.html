@@ -121,7 +121,7 @@
                 <p class="text-[11px] text-gray-400">เข้าสู่ระบบผ่าน Supabase Authentication</p>
             </div>
 
-            <!-- ฟอร์มตั้งค่า Supabase Project (แสดงครั้งแรกหรือกดตั้งค่า) -->
+            <!-- ฟอร์มตั้งค่า Supabase Project -->
             <div id="supabaseConfigSection" class="mb-3.5 p-2.5 bg-brown-50 rounded-2xl border border-brown-200 text-left">
                 <div class="flex justify-between items-center mb-1">
                     <span class="text-[11px] font-bold text-brown-700">ตั้งค่าการเชื่อมต่อ Supabase</span>
@@ -167,21 +167,21 @@
 
     <!-- Header Navigation -->
     <header class="bg-white shadow-sm border-b border-brown-100 flex-none">
-        <div class="max-w-7xl mx-auto px-4 py-2.5 sm:px-6 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Preemallery Logo" class="w-9 h-9 rounded-xl object-cover border border-brown-200 shadow-sm">
-                <div>
-                    <h1 class="text-base font-bold text-brown-700 leading-tight">Preemallery Studio</h1>
-                    <p class="text-[10px] text-brown-400">ระบบจัดการคิวงาน & เช็คยอดขาย (Supabase)</p>
+        <div class="max-w-7xl mx-auto px-3 py-2 sm:px-6 flex justify-between items-center gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+                <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Preemallery Logo" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover border border-brown-200 shadow-sm flex-shrink-0">
+                <div class="min-w-0">
+                    <h1 class="text-xs sm:text-base font-bold text-brown-700 leading-tight truncate">Preemallery Studio</h1>
+                    <p class="text-[9px] sm:text-[10px] text-brown-400 truncate">ระบบจัดการคิวงาน & เช็คยอดขาย</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
-                <button onclick="withGlobalLoader('กำลังเปิดรายงานยอดขาย...', toggleRevenueModal)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-1.5 shadow-sm">
-                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+                <button onclick="withGlobalLoader('กำลังเปิดรายงานยอดขาย...', toggleRevenueModal)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-sm font-medium transition flex items-center gap-1 shadow-sm whitespace-nowrap">
+                    <i data-lucide="bar-chart-3" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
                     <span class="hidden sm:inline">รายงานยอดขาย</span>
                 </button>
-                <button onclick="withGlobalLoader('กำลังเปิดฟอร์มเพิ่มคิว...', toggleModal)" class="bg-brown-500 hover:bg-brown-600 text-white px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-1.5 shadow-sm hover:shadow-brown-200">
-                    <span class="text-white font-bold text-sm leading-none">+</span>
+                <button onclick="withGlobalLoader('กำลังเปิดฟอร์มเพิ่มคิว...', toggleModal)" class="bg-brown-500 hover:bg-brown-600 text-white px-2.5 sm:px-3.5 py-1.5 rounded-xl text-[11px] sm:text-sm font-medium transition flex items-center gap-1 shadow-sm hover:shadow-brown-200 whitespace-nowrap flex-shrink-0">
+                    <span class="text-white font-bold text-xs sm:text-sm leading-none">+</span>
                     <span>เพิ่มคิวใหม่</span>
                 </button>
             </div>
@@ -581,14 +581,12 @@
             document.getElementById('loadingView').classList.remove('hidden');
 
             try {
-                // พยายาม Sign in ผ่าน Supabase
                 const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email: email,
                     password: pass,
                 });
 
                 if (error) {
-                    // หากล็อกอินไม่สำเร็จ (เช่นยังไม่มี Account ในระบบ Supabase) ให้ลองสมัครให้อัตโนมัติหรือใช้โหมดออฟไลน์สำรอง
                     const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
                         email: email,
                         password: pass,
@@ -608,7 +606,6 @@
                 showToast('เข้าสู่ระบบ Supabase สำเร็จ ยินดีต้อนรับค่ะ Preem');
 
             } catch (err) {
-                // Fallback กรณีใช้งานแบบ Local Storage ทันทีหากเชื่อมต่อ Supabase ไม่สำเร็จ
                 if (email === 'preem.ptn@gmail.com' && pass === 'preem2549') {
                     orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
                     const authScreen = document.getElementById('authScreen');
@@ -626,7 +623,6 @@
             }
         }
 
-        // ดึงข้อมูลคิวงานจากตาราง orders ใน Supabase
         async function fetchOrdersFromSupabase() {
             if (!supabaseClient) return;
             try {
@@ -1018,7 +1014,6 @@
                     slips: [...currentFormSlips]
                 };
 
-                // บันทึกลง Supabase หากเชื่อมต่ออยู่
                 if (supabaseClient) {
                     const { error } = await supabaseClient
                         .from('orders')
@@ -1028,7 +1023,6 @@
                     }
                 }
 
-                // อัปเดต State และ LocalStorage สำรอง
                 const localOrderObj = {
                     id: orderData.id.toString(),
                     customerName: orderData.customer_name,
