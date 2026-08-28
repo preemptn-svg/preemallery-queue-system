@@ -23,6 +23,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- html2canvas for saving receipt as image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Supabase JS Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -60,11 +62,26 @@
             from { opacity: 1; }
             to { opacity: 0; }
         }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes popInBounce {
+            0% { opacity: 0; transform: scale(0.8) translateY(10px); }
+            60% { opacity: 1; transform: scale(1.05) translateY(-5px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
         .toast-enter {
             animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         .toast-exit {
             animation: fadeOut 0.3s forwards;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-pop-in {
+            animation: popInBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
         .custom-scrollbar::-webkit-scrollbar {
@@ -82,22 +99,22 @@
 <body class="bg-brown-50 min-h-screen w-screen overflow-x-hidden text-gray-800 select-none flex flex-col">
 
     <!-- Global Action Loading Overlay -->
-    <div id="globalLoader" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center p-4">
-        <div id="globalLoaderBox" class="bg-white rounded-3xl p-6 shadow-2xl border border-brown-100 flex flex-col items-center text-center max-w-xs w-full">
+    <div id="globalLoader" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center p-4 transition-opacity duration-300">
+        <div id="globalLoaderBox" class="bg-white rounded-3xl p-6 shadow-2xl border border-brown-100 flex flex-col items-center text-center max-w-xs w-full opacity-0 scale-90">
             <div class="w-12 h-12 border-4 border-brown-300 border-t-brown-600 rounded-full animate-spin mb-3"></div>
             <p id="globalLoaderText" class="text-xs font-semibold text-brown-800 tracking-wide">กำลังโหลด...</p>
         </div>
     </div>
 
-    <!-- 1. Splash Screen & Login Overlay (เปิดเข้าหน้าคิวทันทีโดยอัตโนมัติ) -->
-    <div id="authScreen" class="fixed inset-0 bg-brown-900 z-50 hidden flex-col items-center justify-center p-4">
-        <div id="splashView" class="flex flex-col items-center text-center">
-            <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Preemallery Logo" class="w-24 h-24 rounded-3xl object-cover border-2 border-brown-300 shadow-2xl mb-4">
+    <!-- 1. Splash Screen & Login Overlay -->
+    <div id="authScreen" class="fixed inset-0 bg-brown-900 z-50 flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+        <div id="splashView" class="flex flex-col items-center text-center animate-fade-in">
+            <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Preemallery Logo" class="w-24 h-24 rounded-3xl object-cover border-2 border-brown-300 shadow-2xl mb-4 animate-bounce">
             <h1 class="text-2xl font-bold text-white tracking-wide">Preemallery Studio</h1>
             <p class="text-xs text-brown-300 mt-1">ระบบจัดการคิวงาน & เช็คยอดขาย (Supabase Cloud)</p>
         </div>
 
-        <div id="loginBox" class="hidden bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-brown-100">
+        <div id="loginBox" class="hidden bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-brown-100 animate-fade-in">
             <div class="text-center mb-4">
                 <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Logo" class="w-12 h-12 rounded-2xl object-cover mx-auto mb-1 border border-brown-200 shadow-sm">
                 <h3 class="text-base font-bold text-brown-800">Preemallery Studio</h3>
@@ -139,7 +156,7 @@
             </form>
         </div>
 
-        <div id="loadingView" class="hidden flex flex-col items-center text-center">
+        <div id="loadingView" class="hidden flex flex-col items-center text-center animate-fade-in">
             <div class="w-10 h-10 border-4 border-brown-300 border-t-white rounded-full animate-spin mb-3"></div>
             <p class="text-xs text-white font-medium tracking-wider">กำลังซิงค์ฐานข้อมูล Supabase...</p>
         </div>
@@ -246,8 +263,8 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">เลขออเดอร์ (พิมพ์ตัวเลขต่อท้ายเอง)</label>
-                        <input type="text" id="lineOrderNo" required class="w-full px-3.5 py-2 bg-white border border-brown-200 rounded-xl text-xs font-bold text-brown-700 focus:outline-none focus:border-brown-500">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">เลขออเดอร์ (อิงตามคิว)</label>
+                        <input type="text" id="lineOrderNo" readonly class="w-full px-3.5 py-2 bg-brown-50/70 border border-brown-200 rounded-xl text-xs font-bold text-brown-700 focus:outline-none cursor-not-allowed">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">สถานะงาน</label>
@@ -292,6 +309,12 @@
                 </div>
 
                 <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">แนบสลีปการโอนเงิน (เลือกได้หลายรูป)</label>
+                    <input type="file" id="slipInput" accept="image/*" multiple onchange="handleMultipleSlipsUpload(event)" class="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brown-50 file:text-brown-700 hover:file:bg-brown-100 border border-brown-200 rounded-xl cursor-pointer">
+                    <div id="slipPreviewsList" class="mt-2 flex gap-2 overflow-x-auto pb-1"></div>
+                </div>
+
+                <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">โน้ตเพิ่มเติม (Admin)</label>
                     <input type="text" id="note" placeholder="เช่น ส่งไฟล์ทาง Google Drive" class="w-full px-3.5 py-2 border border-brown-200 rounded-xl text-xs focus:outline-none focus:border-brown-500">
                 </div>
@@ -301,6 +324,80 @@
                     <button type="submit" class="px-5 py-2 bg-brown-500 hover:bg-brown-600 text-white rounded-xl text-xs font-medium transition shadow-sm">บันทึกข้อมูล</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal: Receipt System (ใบเสร็จรับเงิน) -->
+    <div id="receiptModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-brown-100 custom-scrollbar p-5 flex flex-col justify-between">
+            
+            <!-- ส่วนพิมพ์ใบเสร็จขนาดมาตรฐาน -->
+            <div id="receiptPrintArea" class="bg-white p-3 text-gray-800">
+                <div class="flex justify-between items-start pb-3 border-b border-brown-200">
+                    <div class="flex items-center gap-2">
+                        <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Logo" class="w-8 h-8 rounded-xl object-cover border border-brown-200 flex-shrink-0">
+                        <div>
+                            <h2 class="text-sm font-bold text-brown-800 leading-tight whitespace-nowrap">Preemallery Studio</h2>
+                            <p class="text-[9px] text-gray-500">ใบเสร็จรับเงิน / Receipt</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span id="receiptStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">ชำระแล้ว</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 my-2.5 text-xs">
+                    <div>
+                        <p class="text-[9px] text-gray-400">เลขออเดอร์:</p>
+                        <p id="receiptOrderNo" class="font-bold text-brown-700">-</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[9px] text-gray-400">วันที่สั่งงาน:</p>
+                        <p id="receiptDate" class="font-medium text-gray-700">-</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] text-gray-400">ลูกค้า:</p>
+                        <p id="receiptCustomerName" class="font-bold text-gray-800">-</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[9px] text-gray-400">นัดส่งงาน:</p>
+                        <p id="receiptDueDate" class="font-medium text-brown-600">-</p>
+                    </div>
+                </div>
+
+                <div class="bg-brown-50/50 p-2.5 rounded-xl border border-brown-100 my-2.5">
+                    <p class="text-[9px] text-gray-400 font-medium mb-0.5">รายการบริการ</p>
+                    <p id="receiptJobDetail" class="text-xs text-gray-700 leading-relaxed font-normal whitespace-pre-line">-</p>
+                </div>
+
+                <div class="space-y-1 text-xs pt-2 border-t border-gray-100">
+                    <div class="flex justify-between text-gray-600">
+                        <span>ยอดรวม:</span>
+                        <span id="receiptTotal" class="font-bold text-gray-800">0 บาท</span>
+                    </div>
+                    <div class="flex justify-between text-gray-600">
+                        <span>ชำระแล้ว:</span>
+                        <span id="receiptDeposit" class="font-bold text-emerald-600">0 บาท</span>
+                    </div>
+                    <div class="flex justify-between text-xs font-bold text-brown-700 pt-1.5 border-t border-brown-200">
+                        <span>ยอดคงเหลือ:</span>
+                        <span id="receiptBalance">0 บาท</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center text-[9px] text-gray-400 pt-2 border-t border-dashed border-gray-200">
+                    <p class="font-medium text-brown-600">ขอบคุณที่ไว้วางใจใช้บริการ Preemallery Studio 🙏🤎</p>
+                </div>
+            </div>
+
+            <!-- ปุ่มกระทำใน Modal ใบเสร็จ -->
+            <div class="mt-3 pt-3 border-t border-gray-100 flex justify-end gap-2">
+                <button onclick="closeReceiptModal()" class="px-3 py-1.5 border border-gray-200 text-gray-600 rounded-xl text-xs hover:bg-gray-50">ปิด</button>
+                <button onclick="withGlobalLoader('กำลังบันทึกรูปภาพ...', saveReceiptAsImage)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                    <span>บันทึกรูปภาพใบเสร็จ</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -360,6 +457,17 @@
         </div>
     </div>
 
+    <!-- Modal Preview Slip Image Gallery -->
+    <div id="imageModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4" onclick="closeImageModal()">
+        <div class="relative max-w-lg w-full bg-white rounded-3xl overflow-hidden shadow-2xl p-4 flex flex-col items-center" onclick="event.stopPropagation()">
+            <button onclick="closeImageModal()" class="absolute top-3 right-3 bg-gray-900/50 text-white rounded-full p-1.5 hover:bg-gray-900/80 z-10"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <div class="w-full flex items-center justify-center min-h-[250px] max-h-[60vh] my-2 relative">
+                <img id="modalSlipImage" src="" alt="Slip Image" class="max-w-full max-h-[60vh] object-contain rounded-2xl">
+            </div>
+            <div id="modalThumbnails" class="flex gap-2 mt-2 overflow-x-auto max-w-full py-1"></div>
+        </div>
+    </div>
+
     <!-- Custom Confirmation Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-sm w-full p-5 text-center shadow-2xl border border-brown-100 space-y-3">
@@ -377,10 +485,10 @@
         </div>
     </div>
 
-   <script>
+    <script>
         // Supabase Initialization & Configuration
-        let supabaseUrl = localStorage.getItem('sb_url') || 'https://zlumthwpdgcnyvigygyu.supabase.co';[cite: 7]
-        let supabaseKey = localStorage.getItem('sb_key') || 'sb_publishable_7lEXqG9AhC_hSSAVhUMViw_qDM84Giu';[cite: 7]
+        let supabaseUrl = localStorage.getItem('sb_url') || 'https://zlumthwpdgcnyvigygyu.supabase.co';
+        let supabaseKey = localStorage.getItem('sb_key') || 'sb_publishable_7lEXqG9AhC_hSSAVhUMViw_qDM84Giu';
         let supabaseClient = null;
 
         function initSupabase() {
@@ -407,21 +515,19 @@
             }
         }
 
+        // โหลดค่าลงฟอร์มตั้งค่าเริ่มต้นถ้ามี
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('sbUrlInput').value = supabaseUrl;
             document.getElementById('sbKeyInput').value = supabaseKey;
             initSupabase();
 
-            // ข้ามหน้า Login เข้าสู่ระบบคิวงานหลักทันทีโดยอัตโนมัติ
-            const authScreen = document.getElementById('authScreen');
-            authScreen.classList.add('hidden');
-            
-            // โหลดข้อมูลเริ่มต้น
-            orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
-            renderOrders();
-            fetchOrdersFromSupabase();
+            setTimeout(() => {
+                document.getElementById('splashView').classList.add('hidden');
+                document.getElementById('loginBox').classList.remove('hidden');
+            }, 1200);
         });
 
+        // Helper: ดึงวันที่ปัจจุบันตามเวลาท้องถิ่น (Local Date)
         function getLocalToday() {
             const d = new Date();
             const year = d.getFullYear();
@@ -432,22 +538,35 @@
 
         let orders = [];
         let currentFilter = 'all';
+        let currentFormSlips = [];
         let deleteTargetId = null;
 
         function withGlobalLoader(loadingText = 'กำลังโหลด...', callback) {
             const loader = document.getElementById('globalLoader');
+            const box = document.getElementById('globalLoaderBox');
             document.getElementById('globalLoaderText').innerText = loadingText;
 
             loader.classList.remove('hidden');
+            box.classList.remove('opacity-0', 'scale-90', 'animate-pop-in');
+            
+            void box.offsetWidth; 
+            box.classList.add('animate-pop-in');
 
             setTimeout(() => {
-                loader.classList.add('hidden');
-                if (callback && typeof callback === 'function') {
-                    callback();
-                }
-            }, 300);
+                box.classList.remove('animate-pop-in');
+                box.classList.add('opacity-0', 'scale-90');
+                loader.classList.add('opacity-0');
+                setTimeout(() => {
+                    loader.classList.add('hidden');
+                    loader.classList.remove('opacity-0');
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }, 200);
+            }, 500);
         }
 
+        // ฟังก์ชันเข้าสู่ระบบด้วย Supabase Auth
         async function handleLogin(e) {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim();
@@ -480,14 +599,20 @@
                 await fetchOrdersFromSupabase();
 
                 const authScreen = document.getElementById('authScreen');
-                authScreen.classList.add('hidden');
+                authScreen.classList.add('opacity-0');
+                setTimeout(() => {
+                    authScreen.classList.add('hidden');
+                }, 500);
                 showToast('เข้าสู่ระบบ Supabase สำเร็จ ยินดีต้อนรับค่ะ Preem');
 
             } catch (err) {
                 if (email === 'preem.ptn@gmail.com' && pass === 'preem2549') {
                     orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
                     const authScreen = document.getElementById('authScreen');
-                    authScreen.classList.add('hidden');
+                    authScreen.classList.add('opacity-0');
+                    setTimeout(() => {
+                        authScreen.classList.add('hidden');
+                    }, 500);
                     renderOrders();
                     showToast('เข้าสู่ระบบสำเร็จ (Offline Mode)');
                 } else {
@@ -504,13 +629,9 @@
                 const { data, error } = await supabaseClient
                     .from('orders')
                     .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(50);
+                    .order('created_at', { ascending: false });
 
-                if (error) {
-                    console.error('Supabase fetch error:', error);
-                    orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
-                } else if (data && data.length > 0) {
+                if (!error && data) {
                     orders = data.map(item => ({
                         id: item.id.toString(),
                         customerName: item.customer_name,
@@ -522,11 +643,12 @@
                         deposit: item.deposit,
                         balance: item.balance,
                         status: item.status,
-                        note: item.note
+                        note: item.note,
+                        slips: item.slips || []
                     }));
                 }
             } catch (err) {
-                console.error('Fetch exception:', err);
+                console.error('Fetch error:', err);
                 orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
             }
             renderOrders();
@@ -585,8 +707,20 @@
         };
 
         function generateNextOrderNo(targetDateStr) {
-            const count = orders.length + 1;
-            return 'PMS-' + String(count).padStart(3, '0');
+            const dateStr = targetDateStr || getLocalToday();
+            let maxNum = 0;
+            orders.forEach(o => {
+                if (o.orderDate === dateStr && o.lineOrderNo) {
+                    const match = o.lineOrderNo.match(/\d+/);
+                    if (match) {
+                        const numPart = parseInt(match[0], 10);
+                        if (!isNaN(numPart) && numPart > maxNum) {
+                            maxNum = numPart;
+                        }
+                    }
+                }
+            });
+            return `PMS-${String(maxNum + 1).padStart(3, '0')}`;
         }
 
         function renderOrders() {
@@ -595,8 +729,8 @@
             container.innerHTML = '';
 
             const filtered = orders.filter(o => {
-                const matchSearch = (o.customerName && o.customerName.toLowerCase().includes(search)) || 
-                                    (o.jobDetail && o.jobDetail.toLowerCase().includes(search)) || 
+                const matchSearch = o.customerName.toLowerCase().includes(search) || 
+                                    o.jobDetail.toLowerCase().includes(search) || 
                                     (o.lineOrderNo && o.lineOrderNo.toLowerCase().includes(search));
                 const matchFilter = currentFilter === 'all' || o.status === currentFilter;
                 return matchSearch && matchFilter;
@@ -608,9 +742,9 @@
                 return;
             }
 
-            const fragment = document.createDocumentFragment();
-
             filtered.forEach(o => {
+                const slipList = o.slips || (o.slipImage ? [o.slipImage] : []);
+
                 const statusBg = {
                     'รอรับคิว': 'bg-yellow-100 text-yellow-700 border-yellow-200',
                     'กำลังดำเนินการ': 'bg-blue-100 text-blue-700 border-blue-200',
@@ -624,7 +758,7 @@
                 card.innerHTML = `
                     <div class="flex-1 flex flex-col">
                         <div class="flex justify-between items-center mb-1.5">
-                            <span class="text-[11px] font-bold text-brown-600 bg-brown-100/70 px-2 py-0.5 rounded-full border border-brown-200">คิวที่ ${o.lineOrderNo || 'PMS-'}</span>
+                            <span class="text-[11px] font-bold text-brown-600 bg-brown-100/70 px-2 py-0.5 rounded-full border border-brown-200">คิวที่ ${o.lineOrderNo || 'PMS-001'}</span>
                             <span class="text-[10px] px-2 py-0.5 rounded-full font-medium border ${statusBg}">${o.status}</span>
                         </div>
                         
@@ -640,9 +774,20 @@
                         </div>
 
                         <div class="bg-brown-50/30 p-2.5 rounded-xl space-y-1 text-xs border border-brown-100/50 mb-2.5">
-                            <div class="flex justify-between text-gray-600"><span>ยอดรวม:</span> <span class="font-bold text-gray-800">${Number(o.totalAmount || 0).toLocaleString()} บาท</span></div>
-                            <div class="flex justify-between text-gray-600"><span>มัดจำแล้ว:</span> <span class="font-bold text-green-600">${Number(o.deposit || 0).toLocaleString()} บาท</span></div>
-                            <div class="flex justify-between font-bold text-brown-600 pt-1 border-t border-brown-100"><span>คงเหลือ:</span> <span>${Number(o.balance || 0).toLocaleString()} บาท</span></div>
+                            <div class="flex justify-between text-gray-600"><span>ยอดรวม:</span> <span class="font-bold text-gray-800">${Number(o.totalAmount).toLocaleString()} บาท</span></div>
+                            <div class="flex justify-between text-gray-600"><span>มัดจำแล้ว:</span> <span class="font-bold text-green-600">${Number(o.deposit).toLocaleString()} บาท</span></div>
+                            <div class="flex justify-between font-bold text-brown-600 pt-1 border-t border-brown-100"><span>คงเหลือ:</span> <span>${Number(o.balance).toLocaleString()} บาท</span></div>
+                        </div>
+
+                        <div class="mt-auto pt-1.5 border-t border-gray-100 flex items-center justify-between">
+                            <span class="text-[11px] text-gray-500 flex items-center gap-1">
+                                <i data-lucide="file-text" class="w-3 h-3 text-green-500"></i> สลีป (${slipList.length})
+                            </span>
+                            ${slipList.length > 0 ? `
+                                <button onclick="withGlobalLoader('กำลังเปิดแกลเลอรีสลีป...', () => openGallery('${o.id}'))" class="text-xs text-brown-600 hover:text-brown-700 font-semibold flex items-center gap-1">
+                                    <i data-lucide="image" class="w-3.5 h-3.5"></i> ดูสลีป
+                                </button>
+                            ` : '<span class="text-[10px] text-gray-400">ไม่มีสลีป</span>'}
                         </div>
 
                         ${o.note ? `<p class="text-[10px] text-gray-400 mt-1 italic">Note: ${o.note}</p>` : ''}
@@ -652,6 +797,9 @@
                         <button onclick="withGlobalLoader('กำลังคัดลอกสรุปงาน...', () => copyLineSummary('${o.id}'))" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-1.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 shadow-sm transition">
                             <i data-lucide="share-2" class="w-3.5 h-3.5"></i> LINE
                         </button>
+                        <button onclick="withGlobalLoader('กำลังสร้างใบเสร็จ...', () => openReceiptModal('${o.id}'))" class="p-1.5 border border-brown-200 text-brown-600 hover:bg-brown-50 rounded-xl transition" title="ออกใบเสร็จ">
+                            <i data-lucide="receipt" class="w-4 h-4"></i>
+                        </button>
                         <button onclick="withGlobalLoader('กำลังโหลดข้อมูลแก้ไข...', () => editOrder('${o.id}'))" class="p-1.5 border border-brown-200 text-brown-600 hover:bg-brown-50 rounded-xl transition" title="แก้ไขคิวงาน">
                             <i data-lucide="edit-2" class="w-4 h-4"></i>
                         </button>
@@ -660,9 +808,8 @@
                         </button>
                     </div>
                 `;
-                fragment.appendChild(card);
+                container.appendChild(card);
             });
-            container.appendChild(fragment);
 
             lucide.createIcons();
             updateStats();
@@ -681,12 +828,157 @@
             document.getElementById('balance').value = Math.max(0, total - deposit);
         }
 
+        function handleMultipleSlipsUpload(event) {
+            const files = Array.from(event.target.files);
+            if (!files.length) return;
+
+            let loadedCount = 0;
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 600;
+                        const scaleFactor = MAX_WIDTH / img.width;
+                        
+                        if (img.width > MAX_WIDTH) {
+                            canvas.width = MAX_WIDTH;
+                            canvas.height = img.height * scaleFactor;
+                        } else {
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                        }
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        
+                        currentFormSlips.push(compressedBase64);
+                        loadedCount++;
+                        
+                        if (loadedCount === files.length) {
+                            renderFormSlipPreviews();
+                            document.getElementById('slipInput').value = '';
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderFormSlipPreviews() {
+            const container = document.getElementById('slipPreviewsList');
+            container.innerHTML = '';
+
+            currentFormSlips.forEach((src, idx) => {
+                const item = document.createElement('div');
+                item.className = "relative flex-shrink-0 w-16 h-20 border border-brown-200 rounded-xl overflow-hidden bg-gray-50";
+                item.innerHTML = `
+                    <img src="${src}" class="w-full h-full object-cover">
+                    <button type="button" onclick="removeSingleSlip(${idx})" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 shadow hover:bg-red-600 transition">
+                        <i data-lucide="x" class="w-2.5 h-2.5"></i>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        function removeSingleSlip(index) {
+            currentFormSlips.splice(index, 1);
+            renderFormSlipPreviews();
+        }
+
+        function openGallery(orderId) {
+            const o = orders.find(item => item.id === orderId);
+            if(!o) return;
+
+            const slipList = o.slips || (o.slipImage ? [o.slipImage] : []);
+            if(!slipList.length) return;
+
+            const modalImg = document.getElementById('modalSlipImage');
+            const thumbContainer = document.getElementById('modalThumbnails');
+            
+            modalImg.src = slipList[0];
+            thumbContainer.innerHTML = '';
+
+            slipList.forEach((src, idx) => {
+                const thumb = document.createElement('img');
+                thumb.src = src;
+                thumb.className = `w-10 h-14 object-cover rounded-lg border-2 cursor-pointer transition ${idx === 0 ? 'border-brown-500 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`;
+                thumb.onclick = () => {
+                    modalImg.src = src;
+                    document.querySelectorAll('#modalThumbnails img').forEach(t => t.classList.replace('border-brown-500', 'border-transparent'));
+                    thumb.classList.replace('border-transparent', 'border-brown-500');
+                };
+                thumbContainer.appendChild(thumb);
+            });
+
+            document.getElementById('imageModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+        }
+
+        function openReceiptModal(id) {
+            const o = orders.find(item => item.id === id);
+            if(!o) return;
+
+            document.getElementById('receiptOrderNo').innerText = `คิวที่ ${o.lineOrderNo || 'PMS-001'}`;
+            document.getElementById('receiptCustomerName').innerText = o.customerName;
+            document.getElementById('receiptDate').innerText = formatDateOnly(o.orderDate);
+            document.getElementById('receiptDueDate').innerText = o.dueDate ? formatDateOnly(o.dueDate) : 'ไม่ระบุ';
+            document.getElementById('receiptJobDetail').innerText = o.jobDetail;
+            document.getElementById('receiptTotal').innerText = `${Number(o.totalAmount).toLocaleString()} บาท`;
+            document.getElementById('receiptDeposit').innerText = `${Number(o.deposit).toLocaleString()} บาท`;
+            document.getElementById('receiptBalance').innerText = `${Number(o.balance).toLocaleString()} บาท`;
+
+            const badge = document.getElementById('receiptStatusBadge');
+            if (o.balance <= 0) {
+                badge.innerText = 'ชำระเงินครบแล้ว';
+                badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200';
+            } else {
+                badge.innerText = `ค้างชำระ ${Number(o.balance).toLocaleString()} บาท`;
+                badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200';
+            }
+
+            document.getElementById('receiptModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receiptModal').classList.add('hidden');
+        }
+
+        function saveReceiptAsImage() {
+            const receiptElement = document.getElementById('receiptPrintArea');
+            html2canvas(receiptElement, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `receipt_queue_${document.getElementById('receiptOrderNo').innerText.replace(/\s+/g, '')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('บันทึกรูปภาพใบเสร็จเรียบร้อยแล้ว');
+            }).catch(err => {
+                showToast('ไม่สามารถบันทึกรูปภาพได้ กรุณาลองใหม่อีกครั้ง', 'warning');
+            });
+        }
+
         function toggleModal() {
             const modal = document.getElementById('orderModal');
             modal.classList.toggle('hidden');
             if(modal.classList.contains('hidden')) {
                 document.getElementById('orderForm').reset();
                 document.getElementById('orderId').value = '';
+                currentFormSlips = [];
+                renderFormSlipPreviews();
                 document.getElementById('modalTitle').innerText = 'ลงคิวงานใหม่';
             } else {
                 if (!document.getElementById('orderId').value) {
@@ -696,6 +988,15 @@
                 }
             }
         }
+
+        document.getElementById('orderDate').addEventListener('change', function() {
+            if (!document.getElementById('orderId').value) {
+                const selectedDate = this.value;
+                if (selectedDate) {
+                    document.getElementById('lineOrderNo').value = generateNextOrderNo(selectedDate);
+                }
+            }
+        });
 
         async function saveOrder(e) {
             e.preventDefault();
@@ -712,7 +1013,8 @@
                     deposit: parseFloat(document.getElementById('deposit').value) || 0,
                     balance: parseFloat(document.getElementById('balance').value) || 0,
                     status: document.getElementById('status').value,
-                    note: document.getElementById('note').value
+                    note: document.getElementById('note').value,
+                    slips: [...currentFormSlips]
                 };
 
                 if (supabaseClient) {
@@ -735,7 +1037,8 @@
                     deposit: orderData.deposit,
                     balance: orderData.balance,
                     status: orderData.status,
-                    note: orderData.note
+                    note: orderData.note,
+                    slips: orderData.slips
                 };
 
                 const index = orders.findIndex(o => o.id === localOrderObj.id);
@@ -746,7 +1049,7 @@
                 }
 
                 localStorage.setItem('freelance_orders', JSON.stringify(orders));
-                showToast('บันทึกข้อมูลคิวงานเรียบร้อยแล้ว');
+                showToast('บันทึกข้อมูลคิวงานลง Supabase เรียบร้อยแล้ว');
 
                 toggleModal();
                 renderOrders();
@@ -759,7 +1062,7 @@
 
             document.getElementById('orderId').value = o.id;
             document.getElementById('customerName').value = o.customerName;
-            document.getElementById('lineOrderNo').value = o.lineOrderNo || 'PMS-';
+            document.getElementById('lineOrderNo').value = o.lineOrderNo || 'PMS-001';
             document.getElementById('jobDetail').value = o.jobDetail;
             document.getElementById('orderDate').value = o.orderDate || '';
             document.getElementById('dueDate').value = o.dueDate || '';
@@ -768,6 +1071,9 @@
             document.getElementById('balance').value = o.balance;
             document.getElementById('status').value = o.status;
             document.getElementById('note').value = o.note || '';
+            
+            currentFormSlips = o.slips ? [...o.slips] : (o.slipImage ? [o.slipImage] : []);
+            renderFormSlipPreviews();
 
             document.getElementById('modalTitle').innerText = 'แก้ไขคิวงาน';
             toggleModal();
@@ -862,26 +1168,24 @@
                 return;
             }
 
-            const fragment = document.createDocumentFragment();
             filtered.forEach(o => {
                 const item = document.createElement('div');
                 item.className = "bg-gray-50 p-2.5 rounded-xl border border-gray-200/60 flex justify-between items-center text-xs";
                 item.innerHTML = `
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-brown-700">คิวที่ ${o.lineOrderNo || 'PMS-'}</span>
+                            <span class="font-bold text-brown-700">คิวที่ ${o.lineOrderNo || 'PMS-001'}</span>
                             <span class="font-medium text-gray-800">${o.customerName}</span>
                         </div>
                         <p class="text-[10px] text-gray-500 truncate max-w-[200px] sm:max-w-[300px]">${o.jobDetail}</p>
                     </div>
                     <div class="text-right">
-                        <span class="font-bold text-emerald-600 block">${Number(o.totalAmount || 0).toLocaleString()} บาท</span>
-                        <span class="text-[10px] text-gray-400">รับเงิน ${Number(o.deposit || 0).toLocaleString()} บาท</span>
+                        <span class="font-bold text-emerald-600 block">${Number(o.totalAmount).toLocaleString()} บาท</span>
+                        <span class="text-[10px] text-gray-400">รับเงิน ${Number(o.deposit).toLocaleString()} บาท</span>
                     </div>
                 `;
-                fragment.appendChild(item);
+                container.appendChild(item);
             });
-            container.appendChild(fragment);
         }
 
         function copyLineSummary(id) {
@@ -890,14 +1194,14 @@
 
             const text = `✨ สรุปรายละเอียดคิวงานของคุณ ${o.customerName} ✨\n` +
                          `----------------------------\n` +
-                         `🛒 เลขคิวออเดอร์: คิวที่ ${o.lineOrderNo || 'PMS-'}\n` +
+                         `🛒 เลขคิวออเดอร์: คิวที่ ${o.lineOrderNo || 'PMS-001'}\n` +
                          `📝 งาน: ${o.jobDetail}\n` +
-                         `📅 วันที่สั่งงาน: ${formatDateOnly(o.orderData || o.orderDate)}\n` +
+                         `📅 วันที่สั่งงาน: ${formatDateOnly(o.orderDate)}\n` +
                          `⏰ กำหนดส่งงาน: ${o.dueDate ? formatDateOnly(o.dueDate) : 'ไม่ระบุ'}\n` +
                          `----------------------------\n` +
-                         `💰 ยอดรวม: ${Number(o.totalAmount || 0).toLocaleString()} บาท\n` +
-                         `✅ รับเงินแล้ว: ${Number(o.deposit || 0).toLocaleString()} บาท\n` +
-                         `📌 ยอดคงเหลือชำระวันส่งงาน: ${Number(o.balance || 0).toLocaleString()} บาท\n` +
+                         `💰 ยอดรวม: ${Number(o.totalAmount).toLocaleString()} บาท\n` +
+                         `✅ รับเงินแล้ว: ${Number(o.deposit).toLocaleString()} บาท\n` +
+                         `📌 ยอดคงเหลือชำระวันส่งงาน: ${Number(o.balance).toLocaleString()} บาท\n` +
                          `----------------------------\n` +
                          `ขอบคุณที่ใช้บริการค่ะ 🙏🤎`;
 
@@ -905,6 +1209,8 @@
                 showToast('คัดลอกสรุปงานแล้ว! วางในแชท LINE ได้ทันที');
             });
         }
+
+        renderOrders();
     </script>
 </body>
 </html>
