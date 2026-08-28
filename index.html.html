@@ -498,7 +498,6 @@
             }
         }
 
-        // โหลดค่าลงฟอร์มตั้งค่าเริ่มต้นถ้ามี
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('sbUrlInput').value = supabaseUrl;
             document.getElementById('sbKeyInput').value = supabaseKey;
@@ -510,7 +509,6 @@
             }, 1200);
         });
 
-        // Helper: ดึงวันที่ปัจจุบันตามเวลาท้องถิ่น (Local Date)
         function getLocalToday() {
             const d = new Date();
             const year = d.getFullYear();
@@ -548,7 +546,6 @@
             }, 500);
         }
 
-        // ฟังก์ชันเข้าสู่ระบบด้วย Supabase Auth
         async function handleLogin(e) {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim();
@@ -605,13 +602,15 @@
             }
         }
 
+        // ปรับปรุงให้ดึงเฉพาะ 50 รายการล่าสุดเพื่อความเร็วในการโหลด
         async function fetchOrdersFromSupabase() {
             if (!supabaseClient) return;
             try {
                 const { data, error } = await supabaseClient
                     .from('orders')
                     .select('*')
-                    .order('created_at', { ascending: false });
+                    .order('created_at', { ascending: false })
+                    .limit(50);
 
                 if (!error && data) {
                     orders = data.map(item => ({
@@ -710,6 +709,9 @@
                 return;
             }
 
+            // ใช้ DocumentFragment เพื่อลดการเรนเดอร์ DOM ซ้ำๆ ช่วยให้แสดงผลไวขึ้นมาก
+            const fragment = document.createDocumentFragment();
+
             filtered.forEach(o => {
                 const statusBg = {
                     'รอรับคิว': 'bg-yellow-100 text-yellow-700 border-yellow-200',
@@ -763,8 +765,9 @@
                         </button>
                     </div>
                 `;
-                container.appendChild(card);
+                fragment.appendChild(card);
             });
+            container.appendChild(fragment);
 
             lucide.createIcons();
             updateStats();
@@ -1011,6 +1014,7 @@
                 return;
             }
 
+            const fragment = document.createDocumentFragment();
             filtered.forEach(o => {
                 const item = document.createElement('div');
                 item.className = "bg-gray-50 p-2.5 rounded-xl border border-gray-200/60 flex justify-between items-center text-xs";
@@ -1027,8 +1031,9 @@
                         <span class="text-[10px] text-gray-400">รับเงิน ${Number(o.deposit).toLocaleString()} บาท</span>
                     </div>
                 `;
-                container.appendChild(item);
+                fragment.appendChild(item);
             });
+            container.appendChild(fragment);
         }
 
         function copyLineSummary(id) {
@@ -1057,4 +1062,3 @@
     </script>
 </body>
 </html>
-```[cite: 8]
