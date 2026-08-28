@@ -377,7 +377,7 @@
         </div>
     </div>
 
-    <script>
+   <script>
         // Supabase Initialization & Configuration
         let supabaseUrl = localStorage.getItem('sb_url') || 'https://zlumthwpdgcnyvigygyu.supabase.co';[cite: 7]
         let supabaseKey = localStorage.getItem('sb_key') || 'sb_publishable_7lEXqG9AhC_hSSAVhUMViw_qDM84Giu';[cite: 7]
@@ -503,7 +503,11 @@
                     .order('created_at', { ascending: false })
                     .limit(50);
 
-                if (!error && data) {
+                if (error) {
+                    console.error('Supabase fetch error:', error);
+                    // Fallback to local storage if table doesn't exist yet
+                    orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
+                } else if (data) {
                     orders = data.map(item => ({
                         id: item.id.toString(),
                         customerName: item.customer_name,
@@ -519,7 +523,7 @@
                     }));
                 }
             } catch (err) {
-                console.error('Fetch error:', err);
+                console.error('Fetch exception:', err);
                 orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
             }
             renderOrders();
@@ -577,8 +581,10 @@
             });
         };
 
+        // แก้ไขให้สร้างเลขรันออเดอร์อัตโนมัติเบื้องต้น (เช่น PMS-001)
         function generateNextOrderNo(targetDateStr) {
-            return 'PMS-';
+            const count = orders.length + 1;
+            return 'PMS-' + String(count).padStart(3, '0');
         }
 
         function renderOrders() {
@@ -587,8 +593,8 @@
             container.innerHTML = '';
 
             const filtered = orders.filter(o => {
-                const matchSearch = o.customerName.toLowerCase().includes(search) || 
-                                    o.jobDetail.toLowerCase().includes(search) || 
+                const matchSearch = (o.customerName && o.customerName.toLowerCase().includes(search)) || 
+                                    (o.jobDetail && o.jobDetail.toLowerCase().includes(search)) || 
                                     (o.lineOrderNo && o.lineOrderNo.toLowerCase().includes(search));
                 const matchFilter = currentFilter === 'all' || o.status === currentFilter;
                 return matchSearch && matchFilter;
@@ -632,9 +638,9 @@
                         </div>
 
                         <div class="bg-brown-50/30 p-2.5 rounded-xl space-y-1 text-xs border border-brown-100/50 mb-2.5">
-                            <div class="flex justify-between text-gray-600"><span>ยอดรวม:</span> <span class="font-bold text-gray-800">${Number(o.totalAmount).toLocaleString()} บาท</span></div>
-                            <div class="flex justify-between text-gray-600"><span>มัดจำแล้ว:</span> <span class="font-bold text-green-600">${Number(o.deposit).toLocaleString()} บาท</span></div>
-                            <div class="flex justify-between font-bold text-brown-600 pt-1 border-t border-brown-100"><span>คงเหลือ:</span> <span>${Number(o.balance).toLocaleString()} บาท</span></div>
+                            <div class="flex justify-between text-gray-600"><span>ยอดรวม:</span> <span class="font-bold text-gray-800">${Number(o.totalAmount || 0).toLocaleString()} บาท</span></div>
+                            <div class="flex justify-between text-gray-600"><span>มัดจำแล้ว:</span> <span class="font-bold text-green-600">${Number(o.deposit || 0).toLocaleString()} บาท</span></div>
+                            <div class="flex justify-between font-bold text-brown-600 pt-1 border-t border-brown-100"><span>คงเหลือ:</span> <span>${Number(o.balance || 0).toLocaleString()} บาท</span></div>
                         </div>
 
                         ${o.note ? `<p class="text-[10px] text-gray-400 mt-1 italic">Note: ${o.note}</p>` : ''}
@@ -738,7 +744,7 @@
                 }
 
                 localStorage.setItem('freelance_orders', JSON.stringify(orders));
-                showToast('บันทึกข้อมูลคิวงานลง Supabase เรียบร้อยแล้ว');
+                showToast('บันทึกข้อมูลคิวงานเรียบร้อยแล้ว');
 
                 toggleModal();
                 renderOrders();
@@ -855,7 +861,7 @@
             }
 
             const fragment = document.createDocumentFragment();
-            filtered.forEach(o => {
+            filtered.fold = filtered.forEach(o => {
                 const item = document.createElement('div');
                 item.className = "bg-gray-50 p-2.5 rounded-xl border border-gray-200/60 flex justify-between items-center text-xs";
                 item.innerHTML = `
@@ -867,8 +873,8 @@
                         <p class="text-[10px] text-gray-500 truncate max-w-[200px] sm:max-w-[300px]">${o.jobDetail}</p>
                     </div>
                     <div class="text-right">
-                        <span class="font-bold text-emerald-600 block">${Number(o.totalAmount).toLocaleString()} บาท</span>
-                        <span class="text-[10px] text-gray-400">รับเงิน ${Number(o.deposit).toLocaleString()} บาท</span>
+                        <span class="font-bold text-emerald-600 block">${Number(o.totalAmount || 0).toLocaleString()} บาท</span>
+                        <span class="text-[10px] text-gray-400">รับเงิน ${Number(o.deposit || 0).toLocaleString()} บาท</span>
                     </div>
                 `;
                 fragment.appendChild(item);
@@ -884,12 +890,12 @@
                          `----------------------------\n` +
                          `🛒 เลขคิวออเดอร์: คิวที่ ${o.lineOrderNo || 'PMS-'}\n` +
                          `📝 งาน: ${o.jobDetail}\n` +
-                         `📅 วันที่สั่งงาน: ${formatDateOnly(o.orderDate)}\n` +
+                         `📅 วันที่สั่งงาน: ${formatDateOnly(o.orderData || o.orderDate)}\n` +
                          `⏰ กำหนดส่งงาน: ${o.dueDate ? formatDateOnly(o.dueDate) : 'ไม่ระบุ'}\n` +
                          `----------------------------\n` +
-                         `💰 ยอดรวม: ${Number(o.totalAmount).toLocaleString()} บาท\n` +
-                         `✅ รับเงินแล้ว: ${Number(o.deposit).toLocaleString()} บาท\n` +
-                         `📌 ยอดคงเหลือชำระวันส่งงาน: ${Number(o.balance).toLocaleString()} บาท\n` +
+                         `💰 ยอดรวม: ${Number(o.totalAmount || 0).toLocaleString()} บาท\n` +
+                         `✅ รับเงินแล้ว: ${Number(o.deposit || 0).toLocaleString()} บาท\n` +
+                         `📌 ยอดคงเหลือชำระวันส่งงาน: ${Number(o.balance || 0).toLocaleString()} บาท\n` +
                          `----------------------------\n` +
                          `ขอบคุณที่ใช้บริการค่ะ 🙏🤎`;
 
@@ -897,8 +903,6 @@
                 showToast('คัดลอกสรุปงานแล้ว! วางในแชท LINE ได้ทันที');
             });
         }
-
-        renderOrders();
     </script>
 </body>
 </html>
