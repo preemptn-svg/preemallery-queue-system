@@ -39,6 +39,7 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="border-b border-[#F3EFEA] text-xs text-[#9E948A]">
+                            <th class="py-3 px-4 font-medium">ออเดอร์</th>
                             <th class="py-3 px-4 font-medium">ลูกค้า</th>
                             <th class="py-3 px-4 font-medium">ชิ้นงาน</th>
                             <th class="py-3 px-4 font-medium">ราคา (บาท)</th>
@@ -131,7 +132,7 @@
             const { data, error } = await supabase
                 .from('freelance_queues')
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: true }); // เรียงจากเก่าไปใหม่ เพื่อให้รันเลข PMS-001 ตามลำดับเวลา
 
             if (error) {
                 console.error('Error fetching data:', error);
@@ -147,11 +148,20 @@
             document.getElementById('total-count').innerText = `${queues.length} คิว`;
             
             if (queues.length === 0) {
-                listEl.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-xs text-[#9E948A]">ยังไม่มีคิวงานในระบบ</td></tr>`;
+                listEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-xs text-[#9E948A]">ยังไม่มีคิวงานในระบบ</td></tr>`;
                 return;
             }
 
-            listEl.innerHTML = queues.map(q => {
+            // แปลงข้อมูลพร้อมใส่เลขออเดอร์แบบ PMS-001 ตามลำดับ
+            const formattedQueues = queues.map((q, index) => {
+                const orderNumber = `PMS-${String(index + 1).padStart(3, '0')}`;
+                return { ...q, orderNumber };
+            });
+
+            // กลับด้านให้รายการล่าสุดขึ้นมาแสดงด้านบนสุดของตาราง
+            const displayQueues = [...formattedQueues].reverse();
+
+            listEl.innerHTML = displayQueues.map(q => {
                 let badgeColor = 'bg-yellow-50 text-yellow-600';
                 if (q.status === 'กำลังทำ') badgeColor = 'bg-blue-50 text-blue-600';
                 if (q.status === 'เสร็จสิ้น') badgeColor = 'bg-emerald-50 text-emerald-600';
@@ -161,6 +171,7 @@
 
                 return `
                     <tr class="border-b border-[#F7F2EC] hover:bg-[#FFFDFB] transition-all">
+                        <td class="py-3 px-4 font-medium text-[#7C6F64]">${q.orderNumber}</td>
                         <td class="py-3 px-4 font-medium text-[#7C6F64]">${q.client_name}</td>
                         <td class="py-3 px-4 text-[#8C8278]">${q.job_title}</td>
                         <td class="py-3 px-4 text-[#8C8278]">${Number(q.price).toLocaleString()} ฿</td>
@@ -247,10 +258,11 @@
         }
 
         function openSummary(id) {
-            const q = allQueuesData.find(item => item.id === id);
-            if (!q) return;
+            const qIndex = allQueuesData.findIndex(item => item.id === id);
+            if (qIndex === -1) return;
+            const q = allQueuesData[qIndex];
 
-            const orderNo = q.id.substring(0, 8).toUpperCase();
+            const orderNo = `PMS-${String(qIndex + 1).padStart(3, '0')}`;
             const createdDate = q.created_at ? new Date(q.created_at).toISOString().split('T')[0] : '-';
             const deadlineDate = q.deadline || '-';
             const totalPrice = Number(q.price || 0);
