@@ -487,8 +487,8 @@
 
     <script>
         // Supabase Initialization & Configuration
-        let supabaseUrl = localStorage.getItem('sb_url') || 'https://zlumthwpdgcnyvigygyu.supabase.co';[cite: 7]
-        let supabaseKey = localStorage.getItem('sb_key') || 'sb_publishable_7lEXqG9AhC_hSSAVhUMViw_qDM84Giu';[cite: 7]
+        let supabaseUrl = localStorage.getItem('sb_url') || 'https://zlumthwpdgcnyvigygyu.supabase.co';
+        let supabaseKey = localStorage.getItem('sb_key') || 'sb_publishable_7lEXqG9AhC_hSSAVhUMViw_qDM84Giu';
         let supabaseClient = null;
 
         function initSupabase() {
@@ -707,6 +707,7 @@
         };
 
         function generateNextOrderNo(targetDateStr) {
+            // คืนค่าเฉพาะคำนำหน้า PMS- เพื่อให้ผู้ใช้พิมพ์ตัวเลขต่อเองได้ตามต้องการ[cite: 10]
             return 'PMS-';
         }
 
