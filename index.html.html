@@ -710,17 +710,15 @@
     const dateStr = targetDateStr || getLocalToday();
     let maxNum = 0;
     orders.forEach(o => {
+        // ตรวจสอบเฉพาะคิวที่อยู่ในวันเดียวกัน (orderDate เดียวกัน)
         if (o.orderDate === dateStr && o.lineOrderNo) {
-            // ตัดเอาเฉพาะส่วนที่เป็นตัวเลขหลังเครื่องหมายขีด เช่น "PMS-001" -> "001"
-            const parts = o.lineOrderNo.split('-');
-            const numStr = parts.length > 1 ? parts[1] : o.lineOrderNo;
-            const numPart = parseInt(numStr, 10);
-            
+            const numPart = parseInt(o.lineOrderNo, 10);
             if (!isNaN(numPart) && numPart > maxNum) {
                 maxNum = numPart;
             }
         }
     });
+    // รันเลขใหม่เพิ่มทีละ 1 และจัดรูปแบบให้เป็น 3 หลักเสมอ
     return String(maxNum + 1).padStart(3, '0');
 }
         function renderOrders() {
