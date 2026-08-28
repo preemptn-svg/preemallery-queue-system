@@ -707,21 +707,27 @@
         };
 
         function generateNextOrderNo(targetDateStr) {
-            const dateStr = targetDateStr || getLocalToday();
+            const dateStr = targetDateStr ? targetDateStr.split('T')[0] : getLocalToday();
             let maxNum = 0;
+    
             orders.forEach(o => {
-                if (o.orderDate === dateStr && o.lineOrderNo) {
-                    const match = o.lineOrderNo.match(/\d+/);
-                    if (match) {
-                        const numPart = parseInt(match[0], 10);
-                        if (!isNaN(numPart) && numPart > maxNum) {
-                            maxNum = numPart;
-                        }
-                    }
-                }
-            });
-            return `PMS-${String(maxNum + 1).padStart(3, '0')}`;
+            // ตัดเวลาออกให้เหลือแค่ YYYY-MM-DD เพื่อเทียบวันที่ให้ตรงกัน
+            const orderDay = o.orderDate ? o.orderDate.split('T')[0] : '';
+        
+            if (orderDay === dateStr && o.lineOrderNo) {
+            // ดึงเฉพาะตัวเลขท้าย เช่น 'PMS-001' หรือ '001' มาแปลงเป็นตัวเลข
+            const cleanNumStr = o.lineOrderNo.replace(/[^0-9]/g, '');
+            const numPart = parseInt(cleanNumStr, 10);
+            
+            if (!isNaN(numPart) && numPart > maxNum) {
+                maxNum = numPart;
+            }
         }
+    });
+    
+    // รันเลขถัดไปและเติม 0 ข้างหน้าให้ครบ 3 หลัก (เช่น 002, 003)
+    return String(maxNum + 1).padStart(3, '0');
+}
 
         function renderOrders() {
             const search = document.getElementById('searchInput').value.toLowerCase();
