@@ -263,8 +263,8 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">เลขออเดอร์ (อิงตามคิว)</label>
-                        <input type="text" id="lineOrderNo" readonly class="w-full px-3.5 py-2 bg-brown-50/70 border border-brown-200 rounded-xl text-xs font-bold text-brown-700 focus:outline-none cursor-not-allowed">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">เลขออเดอร์ (พิมพ์ตัวเลขต่อท้ายเอง)</label>
+                        <input type="text" id="lineOrderNo" required class="w-full px-3.5 py-2 bg-white border border-brown-200 rounded-xl text-xs font-bold text-brown-700 focus:outline-none focus:border-brown-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">สถานะงาน</label>
@@ -306,6 +306,12 @@
                         <label class="block text-xs font-medium text-gray-700 mb-1">คงเหลือ</label>
                         <input type="number" id="balance" readonly class="w-full px-2.5 py-2 bg-brown-50 border border-brown-200 rounded-xl text-xs font-bold text-brown-700 focus:outline-none">
                     </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">แนบสลีปการโอนเงิน (เลือกได้หลายรูป)</label>
+                    <input type="file" id="slipInput" accept="image/*" multiple onchange="handleMultipleSlipsUpload(event)" class="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brown-50 file:text-brown-700 hover:file:bg-brown-100 border border-brown-200 rounded-xl cursor-pointer">
+                    <div id="slipPreviewsList" class="mt-2 flex gap-2 overflow-x-auto pb-1"></div>
                 </div>
 
                 <div>
@@ -451,6 +457,17 @@
         </div>
     </div>
 
+    <!-- Modal Preview Slip Image Gallery -->
+    <div id="imageModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4" onclick="closeImageModal()">
+        <div class="relative max-w-lg w-full bg-white rounded-3xl overflow-hidden shadow-2xl p-4 flex flex-col items-center" onclick="event.stopPropagation()">
+            <button onclick="closeImageModal()" class="absolute top-3 right-3 bg-gray-900/50 text-white rounded-full p-1.5 hover:bg-gray-900/80 z-10"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <div class="w-full flex items-center justify-center min-h-[250px] max-h-[60vh] my-2 relative">
+                <img id="modalSlipImage" src="" alt="Slip Image" class="max-w-full max-h-[60vh] object-contain rounded-2xl">
+            </div>
+            <div id="modalThumbnails" class="flex gap-2 mt-2 overflow-x-auto max-w-full py-1"></div>
+        </div>
+    </div>
+
     <!-- Custom Confirmation Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-sm w-full p-5 text-center shadow-2xl border border-brown-100 space-y-3">
@@ -521,6 +538,7 @@
 
         let orders = [];
         let currentFilter = 'all';
+        let currentFormSlips = [];
         let deleteTargetId = null;
 
         function withGlobalLoader(loadingText = 'กำลังโหลด...', callback) {
@@ -625,7 +643,8 @@
                         deposit: item.deposit,
                         balance: item.balance,
                         status: item.status,
-                        note: item.note
+                        note: item.note,
+                        slips: item.slips || []
                     }));
                 }
             } catch (err) {
@@ -688,20 +707,8 @@
         };
 
         function generateNextOrderNo(targetDateStr) {
-            const dateStr = targetDateStr || getLocalToday();
-            let maxNum = 0;
-            orders.forEach(o => {
-                if (o.orderDate === dateStr && o.lineOrderNo) {
-                    const match = o.lineOrderNo.match(/\d+/);
-                    if (match) {
-                        const numPart = parseInt(match[0], 10);
-                        if (!isNaN(numPart) && numPart > maxNum) {
-                            maxNum = numPart;
-                        }
-                    }
-                }
-            });
-            return `PMS-${String(maxNum + 1).padStart(3, '0')}`;
+            // คืนค่าเฉพาะคำนำหน้า PMS- เพื่อให้ผู้ใช้พิมพ์ตัวเลขต่อเองได้ตามต้องการ[cite: 10]
+            return 'PMS-';
         }
 
         function renderOrders() {
@@ -724,6 +731,8 @@
             }
 
             filtered.forEach(o => {
+                const slipList = o.slips || (o.slipImage ? [o.slipImage] : []);
+
                 const statusBg = {
                     'รอรับคิว': 'bg-yellow-100 text-yellow-700 border-yellow-200',
                     'กำลังดำเนินการ': 'bg-blue-100 text-blue-700 border-blue-200',
@@ -737,7 +746,7 @@
                 card.innerHTML = `
                     <div class="flex-1 flex flex-col">
                         <div class="flex justify-between items-center mb-1.5">
-                            <span class="text-[11px] font-bold text-brown-600 bg-brown-100/70 px-2 py-0.5 rounded-full border border-brown-200">คิวที่ ${o.lineOrderNo || 'PMS-001'}</span>
+                            <span class="text-[11px] font-bold text-brown-600 bg-brown-100/70 px-2 py-0.5 rounded-full border border-brown-200">คิวที่ ${o.lineOrderNo || 'PMS-'}</span>
                             <span class="text-[10px] px-2 py-0.5 rounded-full font-medium border ${statusBg}">${o.status}</span>
                         </div>
                         
@@ -754,8 +763,19 @@
 
                         <div class="bg-brown-50/30 p-2.5 rounded-xl space-y-1 text-xs border border-brown-100/50 mb-2.5">
                             <div class="flex justify-between text-gray-600"><span>ยอดรวม:</span> <span class="font-bold text-gray-800">${Number(o.totalAmount).toLocaleString()} บาท</span></div>
-                            <div class="flex justify-between text-gray-600"><span>ชำระแล้ว:</span> <span class="font-bold text-green-600">${Number(o.deposit).toLocaleString()} บาท</span></div>
+                            <div class="flex justify-between text-gray-600"><span>มัดจำแล้ว:</span> <span class="font-bold text-green-600">${Number(o.deposit).toLocaleString()} บาท</span></div>
                             <div class="flex justify-between font-bold text-brown-600 pt-1 border-t border-brown-100"><span>คงเหลือ:</span> <span>${Number(o.balance).toLocaleString()} บาท</span></div>
+                        </div>
+
+                        <div class="mt-auto pt-1.5 border-t border-gray-100 flex items-center justify-between">
+                            <span class="text-[11px] text-gray-500 flex items-center gap-1">
+                                <i data-lucide="file-text" class="w-3 h-3 text-green-500"></i> สลีป (${slipList.length})
+                            </span>
+                            ${slipList.length > 0 ? `
+                                <button onclick="withGlobalLoader('กำลังเปิดแกลเลอรีสลีป...', () => openGallery('${o.id}'))" class="text-xs text-brown-600 hover:text-brown-700 font-semibold flex items-center gap-1">
+                                    <i data-lucide="image" class="w-3.5 h-3.5"></i> ดูสลีป
+                                </button>
+                            ` : '<span class="text-[10px] text-gray-400">ไม่มีสลีป</span>'}
                         </div>
 
                         ${o.note ? `<p class="text-[10px] text-gray-400 mt-1 italic">Note: ${o.note}</p>` : ''}
@@ -796,11 +816,107 @@
             document.getElementById('balance').value = Math.max(0, total - deposit);
         }
 
+        function handleMultipleSlipsUpload(event) {
+            const files = Array.from(event.target.files);
+            if (!files.length) return;
+
+            let loadedCount = 0;
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 600;
+                        const scaleFactor = MAX_WIDTH / img.width;
+                        
+                        if (img.width > MAX_WIDTH) {
+                            canvas.width = MAX_WIDTH;
+                            canvas.height = img.height * scaleFactor;
+                        } else {
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                        }
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        
+                        currentFormSlips.push(compressedBase64);
+                        loadedCount++;
+                        
+                        if (loadedCount === files.length) {
+                            renderFormSlipPreviews();
+                            document.getElementById('slipInput').value = '';
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderFormSlipPreviews() {
+            const container = document.getElementById('slipPreviewsList');
+            container.innerHTML = '';
+
+            currentFormSlips.forEach((src, idx) => {
+                const item = document.createElement('div');
+                item.className = "relative flex-shrink-0 w-16 h-20 border border-brown-200 rounded-xl overflow-hidden bg-gray-50";
+                item.innerHTML = `
+                    <img src="${src}" class="w-full h-full object-cover">
+                    <button type="button" onclick="removeSingleSlip(${idx})" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 shadow hover:bg-red-600 transition">
+                        <i data-lucide="x" class="w-2.5 h-2.5"></i>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        function removeSingleSlip(index) {
+            currentFormSlips.splice(index, 1);
+            renderFormSlipPreviews();
+        }
+
+        function openGallery(orderId) {
+            const o = orders.find(item => item.id === orderId);
+            if(!o) return;
+
+            const slipList = o.slips || (o.slipImage ? [o.slipImage] : []);
+            if(!slipList.length) return;
+
+            const modalImg = document.getElementById('modalSlipImage');
+            const thumbContainer = document.getElementById('modalThumbnails');
+            
+            modalImg.src = slipList[0];
+            thumbContainer.innerHTML = '';
+
+            slipList.forEach((src, idx) => {
+                const thumb = document.createElement('img');
+                thumb.src = src;
+                thumb.className = `w-10 h-14 object-cover rounded-lg border-2 cursor-pointer transition ${idx === 0 ? 'border-brown-500 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`;
+                thumb.onclick = () => {
+                    modalImg.src = src;
+                    document.querySelectorAll('#modalThumbnails img').forEach(t => t.classList.replace('border-brown-500', 'border-transparent'));
+                    thumb.classList.replace('border-transparent', 'border-brown-500');
+                };
+                thumbContainer.appendChild(thumb);
+            });
+
+            document.getElementById('imageModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+        }
+
         function openReceiptModal(id) {
             const o = orders.find(item => item.id === id);
             if(!o) return;
 
-            document.getElementById('receiptOrderNo').innerText = `คิวที่ ${o.lineOrderNo || 'PMS-001'}`;
+            document.getElementById('receiptOrderNo').innerText = `คิวที่ ${o.lineOrderNo || 'PMS-'}`;
             document.getElementById('receiptCustomerName').innerText = o.customerName;
             document.getElementById('receiptDate').innerText = formatDateOnly(o.orderDate);
             document.getElementById('receiptDueDate').innerText = o.dueDate ? formatDateOnly(o.dueDate) : 'ไม่ระบุ';
@@ -849,6 +965,8 @@
             if(modal.classList.contains('hidden')) {
                 document.getElementById('orderForm').reset();
                 document.getElementById('orderId').value = '';
+                currentFormSlips = [];
+                renderFormSlipPreviews();
                 document.getElementById('modalTitle').innerText = 'ลงคิวงานใหม่';
             } else {
                 if (!document.getElementById('orderId').value) {
@@ -858,15 +976,6 @@
                 }
             }
         }
-
-        document.getElementById('orderDate').addEventListener('change', function() {
-            if (!document.getElementById('orderId').value) {
-                const selectedDate = this.value;
-                if (selectedDate) {
-                    document.getElementById('lineOrderNo').value = generateNextOrderNo(selectedDate);
-                }
-            }
-        });
 
         async function saveOrder(e) {
             e.preventDefault();
@@ -883,7 +992,8 @@
                     deposit: parseFloat(document.getElementById('deposit').value) || 0,
                     balance: parseFloat(document.getElementById('balance').value) || 0,
                     status: document.getElementById('status').value,
-                    note: document.getElementById('note').value
+                    note: document.getElementById('note').value,
+                    slips: [...currentFormSlips]
                 };
 
                 if (supabaseClient) {
@@ -906,7 +1016,8 @@
                     deposit: orderData.deposit,
                     balance: orderData.balance,
                     status: orderData.status,
-                    note: orderData.note
+                    note: orderData.note,
+                    slips: orderData.slips
                 };
 
                 const index = orders.findIndex(o => o.id === localOrderObj.id);
@@ -930,7 +1041,7 @@
 
             document.getElementById('orderId').value = o.id;
             document.getElementById('customerName').value = o.customerName;
-            document.getElementById('lineOrderNo').value = o.lineOrderNo || 'PMS-001';
+            document.getElementById('lineOrderNo').value = o.lineOrderNo || 'PMS-';
             document.getElementById('jobDetail').value = o.jobDetail;
             document.getElementById('orderDate').value = o.orderDate || '';
             document.getElementById('dueDate').value = o.dueDate || '';
@@ -939,6 +1050,9 @@
             document.getElementById('balance').value = o.balance;
             document.getElementById('status').value = o.status;
             document.getElementById('note').value = o.note || '';
+            
+            currentFormSlips = o.slips ? [...o.slips] : (o.slipImage ? [o.slipImage] : []);
+            renderFormSlipPreviews();
 
             document.getElementById('modalTitle').innerText = 'แก้ไขคิวงาน';
             toggleModal();
@@ -1039,7 +1153,7 @@
                 item.innerHTML = `
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-brown-700">คิวที่ ${o.lineOrderNo || 'PMS-001'}</span>
+                            <span class="font-bold text-brown-700">คิวที่ ${o.lineOrderNo || 'PMS-'}</span>
                             <span class="font-medium text-gray-800">${o.customerName}</span>
                         </div>
                         <p class="text-[10px] text-gray-500 truncate max-w-[200px] sm:max-w-[300px]">${o.jobDetail}</p>
@@ -1059,7 +1173,7 @@
 
             const text = `✨ สรุปรายละเอียดคิวงานของคุณ ${o.customerName} ✨\n` +
                          `----------------------------\n` +
-                         `🛒 เลขคิวออเดอร์: คิวที่ ${o.lineOrderNo || 'PMS-001'}\n` +
+                         `🛒 เลขคิวออเดอร์: คิวที่ ${o.lineOrderNo || 'PMS-'}\n` +
                          `📝 งาน: ${o.jobDetail}\n` +
                          `📅 วันที่สั่งงาน: ${formatDateOnly(o.orderDate)}\n` +
                          `⏰ กำหนดส่งงาน: ${o.dueDate ? formatDateOnly(o.dueDate) : 'ไม่ระบุ'}\n` +
