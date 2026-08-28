@@ -707,14 +707,14 @@
         };
 
         function generateNextOrderNo(targetDateStr) {
-    const dateStr = targetDateStr ? targetDateStr.split('T')[0] : getLocalToday();
-    let maxNum = 0;
+            const dateStr = targetDateStr ? targetDateStr.split('T')[0] : getLocalToday();
+            let maxNum = 0;
     
-    orders.forEach(o => {
-        const orderDay = o.orderDate ? o.orderDate.split('T')[0] : '';
+            orders.forEach(o => {
+            const orderDay = o.orderDate ? o.orderDate.split('T')[0] : '';
         
-        if (orderDay === dateStr && o.lineOrderNo) {
-            // ตัดตัวอักษรที่ไม่ใช่ตัวเลขออก (เช่น 'PMS-001' จะเหลือ '001')
+            if (orderDay === dateStr && o.lineOrderNo) {
+            // ตัดตัวอักษรภาษาอังกฤษหรืออักขระพิเศษออก ให้เหลือแต่ตัวเลข (เช่น 'PMS-001' จะเหลือ '001')
             const cleanNumStr = o.lineOrderNo.replace(/[^0-9]/g, '');
             const numPart = parseInt(cleanNumStr, 10);
             
@@ -724,7 +724,7 @@
         }
     });
     
-    // สร้างเลขคิวใหม่ในรูปแบบ PMS-001, PMS-002, ... รันไปเรื่อยๆ ไม่ให้ค้าง
+    // จัดรูปแบบให้กลับมาเป็น PMS-002, PMS-003 ไปเรื่อยๆ
     const nextNumStr = String(maxNum + 1).padStart(3, '0');
     return `PMS-${nextNumStr}`;
 }
