@@ -707,20 +707,20 @@
         };
 
         function generateNextOrderNo(targetDateStr) {
-    const dateStr = targetDateStr || getLocalToday();
-    let maxNum = 0;
-    orders.forEach(o => {
-        // ตรวจสอบเฉพาะคิวที่อยู่ในวันเดียวกัน (orderDate เดียวกัน)
-        if (o.orderDate === dateStr && o.lineOrderNo) {
-            const numPart = parseInt(o.lineOrderNo, 10);
-            if (!isNaN(numPart) && numPart > maxNum) {
-                maxNum = numPart;
-            }
+            const dateStr = targetDateStr || getLocalToday();
+            let maxNum = 0;
+            orders.forEach(o => {
+                // ตรวจสอบเฉพาะคิวที่อยู่ในวันเดียวกัน (orderDate เดียวกัน)
+                if (o.orderDate === dateStr && o.lineOrderNo) {
+                    const numPart = parseInt(o.lineOrderNo.replace('PMS-', ''), 10);
+                    if (!isNaN(numPart) && numPart > maxNum) {
+                        maxNum = numPart;
+                    }
+                }
+            });
+            // รันเลขใหม่เพิ่มทีละ 1 ในรูปแบบ PMS-ตามด้วยตัวเลข
+            return `PMS-${maxNum + 1}`;
         }
-    });
-    // รันเลขใหม่เพิ่มทีละ 1 และจัดรูปแบบให้เป็น 3 หลักเสมอ
-    return String(maxNum + 1).padStart(3, '0');
-}
         function renderOrders() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const container = document.getElementById('orderList');
