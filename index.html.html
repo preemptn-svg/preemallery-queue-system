@@ -711,7 +711,7 @@
             let maxNum = 0;
             orders.forEach(o => {
                 if (o.orderDate === dateStr && o.lineOrderNo) {
-                    // ตัดตัวอักษรหรือขีดออกให้เหลือเฉพาะตัวเลข (เช่น 'PMS-001' จะเหลือ '001')
+                    // ตัดตัวอักษรออกเพื่อให้เหลือแต่ตัวเลขสำหรับคำนวณหาค่ามากที่สุด
                     const cleanNumStr = o.lineOrderNo.replace(/[^0-9]/g, '');
                     const numPart = parseInt(cleanNumStr, 10);
                     if (!isNaN(numPart) && numPart > maxNum) {
@@ -719,7 +719,8 @@
                     }
                 }
             });
-            return String(maxNum + 1).padStart(3, '0');
+            const nextNumStr = String(maxNum + 1).padStart(3, '0');
+            return `PMS-${nextNumStr}`;
         }
 
         function renderOrders() {
