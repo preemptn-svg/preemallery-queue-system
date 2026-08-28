@@ -710,16 +710,23 @@
             const dateStr = targetDateStr || getLocalToday();
             let maxNum = 0;
             orders.forEach(o => {
-                // ใช้ startsWith เพื่อรองรับรูปแบบวันที่จากฐานข้อมูลที่มีเวลาพ่วงมาด้วย (เช่น YYYY-MM-DDTHH:mm:ss)
-                if (o.orderDate && o.orderDate.startsWith(dateStr) && o.lineOrderNo) {
-                    const cleanNum = o.lineOrderNo.replace('PMS-', '');
+                const orderDateOnly = o.orderDate ? o.orderDate.split('T')[0] : '';
+                if (orderDateOnly === dateStr && o.lineOrderNo) {
+                    const cleanNum = o.lineOrderNo.replace(/[^0-9]/g, '');
                     const numPart = parseInt(cleanNum, 10);
                     if (!isNaN(numPart) && numPart > maxNum) {
                         maxNum = numPart;
                     }
                 }
             });
-            // รันเลขใหม่เพิ่มทีละ 1 ในรูปแบบ PMS-ตามด้วยตัวเลข
+            // หากไม่พบเลขคิว ให้ตรวจสอบจำนวนออเดอร์ในวันเดียวกันเพื่อป้องกันกรณีข้อมูลเก่าไม่มีเลขคิว
+            if (maxNum === 0) {
+                const sameDayCount = orders.filter(o => {
+                    const orderDateOnly = o.orderDate ? o.orderDate.split('T')[0] : '';
+                    return orderDateOnly === dateStr;
+                }).length;
+                maxNum = sameDayCount;
+            }
             return `PMS-${maxNum + 1}`;
         }
 
@@ -758,7 +765,7 @@
                 card.innerHTML = `
                     <div class="flex-1 flex flex-col">
                         <div class="flex justify-between items-center mb-1.5">
-                            <span class="text-[11px] font-bold text-brown-600 bg-brown-100/70 px-2 py-0.5 rounded-full border border-brown-200">คิวที่ ${o.lineOrderNo || 'PMS-001'}</span>
+                            <span class="text-[11px] font-bold text-brown-600 bg-brown-100/70 px-2 py-0.5 rounded-full border border-brown-200">คิวที่ ${o.lineOrderNo || 'PMS-1'}</span>
                             <span class="text-[10px] px-2 py-0.5 rounded-full font-medium border ${statusBg}">${o.status}</span>
                         </div>
                         
@@ -928,7 +935,7 @@
             const o = orders.find(item => item.id === id);
             if(!o) return;
 
-            document.getElementById('receiptOrderNo').innerText = `คิวที่ ${o.lineOrderNo || 'PMS-001'}`;
+            document.getElementById('receiptOrderNo').innerText = `คิวที่ ${o.lineOrderNo || 'PMS-1'}`;
             document.getElementById('receiptCustomerName').innerText = o.customerName;
             document.getElementById('receiptDate').innerText = formatDateOnly(o.orderDate);
             document.getElementById('receiptDueDate').innerText = o.dueDate ? formatDateOnly(o.dueDate) : 'ไม่ระบุ';
@@ -1062,7 +1069,7 @@
 
             document.getElementById('orderId').value = o.id;
             document.getElementById('customerName').value = o.customerName;
-            document.getElementById('lineOrderNo').value = o.lineOrderNo || 'PMS-001';
+            document.getElementById('lineOrderNo').value = o.lineOrderNo || 'PMS-1';
             document.getElementById('jobDetail').value = o.jobDetail;
             document.getElementById('orderDate').value = o.orderDate || '';
             document.getElementById('dueDate').value = o.dueDate || '';
@@ -1174,7 +1181,7 @@
                 item.innerHTML = `
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-brown-700">คิวที่ ${o.lineOrderNo || 'PMS-001'}</span>
+                            <span class="font-bold text-brown-700">คิวที่ ${o.lineOrderNo || 'PMS-1'}</span>
                             <span class="font-medium text-gray-800">${o.customerName}</span>
                         </div>
                         <p class="text-[10px] text-gray-500 truncate max-w-[200px] sm:max-w-[300px]">${o.jobDetail}</p>
@@ -1194,7 +1201,7 @@
 
             const text = `✨ สรุปรายละเอียดคิวงานของคุณ ${o.customerName} ✨\n` +
                          `----------------------------\n` +
-                         `🛒 เลขคิวออเดอร์: คิวที่ ${o.lineOrderNo || 'PMS-001'}\n` +
+                         `🛒 เลขคิวออเดอร์: คิวที่ ${o.lineOrderNo || 'PMS-1'}\n` +
                          `📝 งาน: ${o.jobDetail}\n` +
                          `📅 วันที่สั่งงาน: ${formatDateOnly(o.orderDate)}\n` +
                          `⏰ กำหนดส่งงาน: ${o.dueDate ? formatDateOnly(o.dueDate) : 'ไม่ระบุ'}\n` +
