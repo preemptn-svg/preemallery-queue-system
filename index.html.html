@@ -710,9 +710,10 @@
             const dateStr = targetDateStr || getLocalToday();
             let maxNum = 0;
             orders.forEach(o => {
-                // ตรวจสอบเฉพาะคิวที่อยู่ในวันเดียวกัน (orderDate เดียวกัน)
-                if (o.orderDate === dateStr && o.lineOrderNo) {
-                    const numPart = parseInt(o.lineOrderNo.replace('PMS-', ''), 10);
+                // ใช้ startsWith เพื่อรองรับรูปแบบวันที่จากฐานข้อมูลที่มีเวลาพ่วงมาด้วย (เช่น YYYY-MM-DDTHH:mm:ss)
+                if (o.orderDate && o.orderDate.startsWith(dateStr) && o.lineOrderNo) {
+                    const cleanNum = o.lineOrderNo.replace('PMS-', '');
+                    const numPart = parseInt(cleanNum, 10);
                     if (!isNaN(numPart) && numPart > maxNum) {
                         maxNum = numPart;
                     }
@@ -721,6 +722,7 @@
             // รันเลขใหม่เพิ่มทีละ 1 ในรูปแบบ PMS-ตามด้วยตัวเลข
             return `PMS-${maxNum + 1}`;
         }
+
         function renderOrders() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const container = document.getElementById('orderList');
