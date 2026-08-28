@@ -23,8 +23,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- html2canvas for saving receipt as image -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Supabase JS Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -62,26 +60,11 @@
             from { opacity: 1; }
             to { opacity: 0; }
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        @keyframes popInBounce {
-            0% { opacity: 0; transform: scale(0.8) translateY(10px); }
-            60% { opacity: 1; transform: scale(1.05) translateY(-5px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
         .toast-enter {
             animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         .toast-exit {
             animation: fadeOut 0.3s forwards;
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .animate-pop-in {
-            animation: popInBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
         .custom-scrollbar::-webkit-scrollbar {
@@ -99,22 +82,22 @@
 <body class="bg-brown-50 min-h-screen w-screen overflow-x-hidden text-gray-800 select-none flex flex-col">
 
     <!-- Global Action Loading Overlay -->
-    <div id="globalLoader" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center p-4 transition-opacity duration-300">
-        <div id="globalLoaderBox" class="bg-white rounded-3xl p-6 shadow-2xl border border-brown-100 flex flex-col items-center text-center max-w-xs w-full opacity-0 scale-90">
+    <div id="globalLoader" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center p-4">
+        <div id="globalLoaderBox" class="bg-white rounded-3xl p-6 shadow-2xl border border-brown-100 flex flex-col items-center text-center max-w-xs w-full">
             <div class="w-12 h-12 border-4 border-brown-300 border-t-brown-600 rounded-full animate-spin mb-3"></div>
             <p id="globalLoaderText" class="text-xs font-semibold text-brown-800 tracking-wide">กำลังโหลด...</p>
         </div>
     </div>
 
     <!-- 1. Splash Screen & Login Overlay -->
-    <div id="authScreen" class="fixed inset-0 bg-brown-900 z-50 flex flex-col items-center justify-center p-4 transition-opacity duration-500">
-        <div id="splashView" class="flex flex-col items-center text-center animate-fade-in">
-            <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Preemallery Logo" class="w-24 h-24 rounded-3xl object-cover border-2 border-brown-300 shadow-2xl mb-4 animate-bounce">
+    <div id="authScreen" class="fixed inset-0 bg-brown-900 z-50 flex flex-col items-center justify-center p-4">
+        <div id="splashView" class="flex flex-col items-center text-center">
+            <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Preemallery Logo" class="w-24 h-24 rounded-3xl object-cover border-2 border-brown-300 shadow-2xl mb-4">
             <h1 class="text-2xl font-bold text-white tracking-wide">Preemallery Studio</h1>
             <p class="text-xs text-brown-300 mt-1">ระบบจัดการคิวงาน & เช็คยอดขาย (Supabase Cloud)</p>
         </div>
 
-        <div id="loginBox" class="hidden bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-brown-100 animate-fade-in">
+        <div id="loginBox" class="hidden bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-brown-100">
             <div class="text-center mb-4">
                 <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Logo" class="w-12 h-12 rounded-2xl object-cover mx-auto mb-1 border border-brown-200 shadow-sm">
                 <h3 class="text-base font-bold text-brown-800">Preemallery Studio</h3>
@@ -156,7 +139,7 @@
             </form>
         </div>
 
-        <div id="loadingView" class="hidden flex flex-col items-center text-center animate-fade-in">
+        <div id="loadingView" class="hidden flex flex-col items-center text-center">
             <div class="w-10 h-10 border-4 border-brown-300 border-t-white rounded-full animate-spin mb-3"></div>
             <p class="text-xs text-white font-medium tracking-wider">กำลังซิงค์ฐานข้อมูล Supabase...</p>
         </div>
@@ -321,80 +304,6 @@
         </div>
     </div>
 
-    <!-- Modal: Receipt System (ใบเสร็จรับเงิน) -->
-    <div id="receiptModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-brown-100 custom-scrollbar p-5 flex flex-col justify-between">
-            
-            <!-- ส่วนพิมพ์ใบเสร็จขนาดมาตรฐาน -->
-            <div id="receiptPrintArea" class="bg-white p-3 text-gray-800">
-                <div class="flex justify-between items-start pb-3 border-b border-brown-200">
-                    <div class="flex items-center gap-2">
-                        <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Logo" class="w-8 h-8 rounded-xl object-cover border border-brown-200 flex-shrink-0">
-                        <div>
-                            <h2 class="text-sm font-bold text-brown-800 leading-tight whitespace-nowrap">Preemallery Studio</h2>
-                            <p class="text-[9px] text-gray-500">ใบเสร็จรับเงิน / Receipt</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span id="receiptStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">ชำระแล้ว</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 my-2.5 text-xs">
-                    <div>
-                        <p class="text-[9px] text-gray-400">เลขออเดอร์:</p>
-                        <p id="receiptOrderNo" class="font-bold text-brown-700">-</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[9px] text-gray-400">วันที่สั่งงาน:</p>
-                        <p id="receiptDate" class="font-medium text-gray-700">-</p>
-                    </div>
-                    <div>
-                        <p class="text-[9px] text-gray-400">ลูกค้า:</p>
-                        <p id="receiptCustomerName" class="font-bold text-gray-800">-</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[9px] text-gray-400">นัดส่งงาน:</p>
-                        <p id="receiptDueDate" class="font-medium text-brown-600">-</p>
-                    </div>
-                </div>
-
-                <div class="bg-brown-50/50 p-2.5 rounded-xl border border-brown-100 my-2.5">
-                    <p class="text-[9px] text-gray-400 font-medium mb-0.5">รายการบริการ</p>
-                    <p id="receiptJobDetail" class="text-xs text-gray-700 leading-relaxed font-normal whitespace-pre-line">-</p>
-                </div>
-
-                <div class="space-y-1 text-xs pt-2 border-t border-gray-100">
-                    <div class="flex justify-between text-gray-600">
-                        <span>ยอดรวม:</span>
-                        <span id="receiptTotal" class="font-bold text-gray-800">0 บาท</span>
-                    </div>
-                    <div class="flex justify-between text-gray-600">
-                        <span>ชำระแล้ว:</span>
-                        <span id="receiptDeposit" class="font-bold text-emerald-600">0 บาท</span>
-                    </div>
-                    <div class="flex justify-between text-xs font-bold text-brown-700 pt-1.5 border-t border-brown-200">
-                        <span>ยอดคงเหลือ:</span>
-                        <span id="receiptBalance">0 บาท</span>
-                    </div>
-                </div>
-
-                <div class="mt-4 text-center text-[9px] text-gray-400 pt-2 border-t border-dashed border-gray-200">
-                    <p class="font-medium text-brown-600">ขอบคุณที่ไว้วางใจใช้บริการ Preemallery Studio 🙏🤎</p>
-                </div>
-            </div>
-
-            <!-- ปุ่มกระทำใน Modal ใบเสร็จ -->
-            <div class="mt-3 pt-3 border-t border-gray-100 flex justify-end gap-2">
-                <button onclick="closeReceiptModal()" class="px-3 py-1.5 border border-gray-200 text-gray-600 rounded-xl text-xs hover:bg-gray-50">ปิด</button>
-                <button onclick="withGlobalLoader('กำลังบันทึกรูปภาพ...', saveReceiptAsImage)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-sm">
-                    <i data-lucide="image" class="w-3.5 h-3.5"></i>
-                    <span>บันทึกรูปภาพใบเสร็จ</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal: Revenue Analytics -->
     <div id="revenueModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-40 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-brown-100 custom-scrollbar">
@@ -523,27 +432,16 @@
 
         function withGlobalLoader(loadingText = 'กำลังโหลด...', callback) {
             const loader = document.getElementById('globalLoader');
-            const box = document.getElementById('globalLoaderBox');
             document.getElementById('globalLoaderText').innerText = loadingText;
 
             loader.classList.remove('hidden');
-            box.classList.remove('opacity-0', 'scale-90', 'animate-pop-in');
-            
-            void box.offsetWidth; 
-            box.classList.add('animate-pop-in');
 
             setTimeout(() => {
-                box.classList.remove('animate-pop-in');
-                box.classList.add('opacity-0', 'scale-90');
-                loader.classList.add('opacity-0');
-                setTimeout(() => {
-                    loader.classList.add('hidden');
-                    loader.classList.remove('opacity-0');
-                    if (callback && typeof callback === 'function') {
-                        callback();
-                    }
-                }, 200);
-            }, 500);
+                loader.classList.add('hidden');
+                if (callback && typeof callback === 'function') {
+                    callback();
+                }
+            }, 300);
         }
 
         async function handleLogin(e) {
@@ -578,20 +476,14 @@
                 await fetchOrdersFromSupabase();
 
                 const authScreen = document.getElementById('authScreen');
-                authScreen.classList.add('opacity-0');
-                setTimeout(() => {
-                    authScreen.classList.add('hidden');
-                }, 500);
+                authScreen.classList.add('hidden');
                 showToast('เข้าสู่ระบบ Supabase สำเร็จ ยินดีต้อนรับค่ะ Preem');
 
             } catch (err) {
                 if (email === 'preem.ptn@gmail.com' && pass === 'preem2549') {
                     orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
                     const authScreen = document.getElementById('authScreen');
-                    authScreen.classList.add('opacity-0');
-                    setTimeout(() => {
-                        authScreen.classList.add('hidden');
-                    }, 500);
+                    authScreen.classList.add('hidden');
                     renderOrders();
                     showToast('เข้าสู่ระบบสำเร็จ (Offline Mode)');
                 } else {
@@ -602,7 +494,6 @@
             }
         }
 
-        // ปรับปรุงให้ดึงเฉพาะ 50 รายการล่าสุดเพื่อความเร็วในการโหลด
         async function fetchOrdersFromSupabase() {
             if (!supabaseClient) return;
             try {
@@ -709,7 +600,6 @@
                 return;
             }
 
-            // ใช้ DocumentFragment เพื่อลดการเรนเดอร์ DOM ซ้ำๆ ช่วยให้แสดงผลไวขึ้นมาก
             const fragment = document.createDocumentFragment();
 
             filtered.forEach(o => {
@@ -754,9 +644,6 @@
                         <button onclick="withGlobalLoader('กำลังคัดลอกสรุปงาน...', () => copyLineSummary('${o.id}'))" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-1.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 shadow-sm transition">
                             <i data-lucide="share-2" class="w-3.5 h-3.5"></i> LINE
                         </button>
-                        <button onclick="withGlobalLoader('กำลังสร้างใบเสร็จ...', () => openReceiptModal('${o.id}'))" class="p-1.5 border border-brown-200 text-brown-600 hover:bg-brown-50 rounded-xl transition" title="ออกใบเสร็จ">
-                            <i data-lucide="receipt" class="w-4 h-4"></i>
-                        </button>
                         <button onclick="withGlobalLoader('กำลังโหลดข้อมูลแก้ไข...', () => editOrder('${o.id}'))" class="p-1.5 border border-brown-200 text-brown-600 hover:bg-brown-50 rounded-xl transition" title="แก้ไขคิวงาน">
                             <i data-lucide="edit-2" class="w-4 h-4"></i>
                         </button>
@@ -784,53 +671,6 @@
             const total = parseFloat(document.getElementById('totalAmount').value) || 0;
             const deposit = parseFloat(document.getElementById('deposit').value) || 0;
             document.getElementById('balance').value = Math.max(0, total - deposit);
-        }
-
-        function openReceiptModal(id) {
-            const o = orders.find(item => item.id === id);
-            if(!o) return;
-
-            document.getElementById('receiptOrderNo').innerText = `คิวที่ ${o.lineOrderNo || 'PMS-'}`;
-            document.getElementById('receiptCustomerName').innerText = o.customerName;
-            document.getElementById('receiptDate').innerText = formatDateOnly(o.orderDate);
-            document.getElementById('receiptDueDate').innerText = o.dueDate ? formatDateOnly(o.dueDate) : 'ไม่ระบุ';
-            document.getElementById('receiptJobDetail').innerText = o.jobDetail;
-            document.getElementById('receiptTotal').innerText = `${Number(o.totalAmount).toLocaleString()} บาท`;
-            document.getElementById('receiptDeposit').innerText = `${Number(o.deposit).toLocaleString()} บาท`;
-            document.getElementById('receiptBalance').innerText = `${Number(o.balance).toLocaleString()} บาท`;
-
-            const badge = document.getElementById('receiptStatusBadge');
-            if (o.balance <= 0) {
-                badge.innerText = 'ชำระเงินครบแล้ว';
-                badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200';
-            } else {
-                badge.innerText = `ค้างชำระ ${Number(o.balance).toLocaleString()} บาท`;
-                badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200';
-            }
-
-            document.getElementById('receiptModal').classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        function closeReceiptModal() {
-            document.getElementById('receiptModal').classList.add('hidden');
-        }
-
-        function saveReceiptAsImage() {
-            const receiptElement = document.getElementById('receiptPrintArea');
-            html2canvas(receiptElement, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `receipt_queue_${document.getElementById('receiptOrderNo').innerText.replace(/\s+/g, '')}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                showToast('บันทึกรูปภาพใบเสร็จเรียบร้อยแล้ว');
-            }).catch(err => {
-                showToast('ไม่สามารถบันทึกรูปภาพได้ กรุณาลองใหม่อีกครั้ง', 'warning');
-            });
         }
 
         function toggleModal() {
