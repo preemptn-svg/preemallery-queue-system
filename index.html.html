@@ -89,8 +89,8 @@
         </div>
     </div>
 
-    <!-- 1. Splash Screen & Login Overlay -->
-    <div id="authScreen" class="fixed inset-0 bg-brown-900 z-50 flex flex-col items-center justify-center p-4">
+    <!-- 1. Splash Screen & Login Overlay (เปิดเข้าหน้าคิวทันทีโดยอัตโนมัติ) -->
+    <div id="authScreen" class="fixed inset-0 bg-brown-900 z-50 hidden flex-col items-center justify-center p-4">
         <div id="splashView" class="flex flex-col items-center text-center">
             <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Preemallery Logo" class="w-24 h-24 rounded-3xl object-cover border-2 border-brown-300 shadow-2xl mb-4">
             <h1 class="text-2xl font-bold text-white tracking-wide">Preemallery Studio</h1>
@@ -101,7 +101,7 @@
             <div class="text-center mb-4">
                 <img src="https://lh3.googleusercontent.com/d/16UQrXCNxwYcWKvMkoM6JB47pJKXIDg3E" alt="Logo" class="w-12 h-12 rounded-2xl object-cover mx-auto mb-1 border border-brown-200 shadow-sm">
                 <h3 class="text-base font-bold text-brown-800">Preemallery Studio</h3>
-                <p class="text-[11px] text-gray-400">เข้าสู่ระบบจัดการคิวงาน</p>
+                <p class="text-[11px] text-gray-400">เข้าสู่ระบบผ่าน Supabase Authentication</p>
             </div>
 
             <!-- ฟอร์มตั้งค่า Supabase Project -->
@@ -110,7 +110,7 @@
                     <span class="text-[11px] font-bold text-brown-700">ตั้งค่าการเชื่อมต่อ Supabase</span>
                     <button type="button" onclick="toggleSupabaseConfigInputs()" class="text-[10px] text-brown-500 underline">ซ่อน/แสดง</button>
                 </div>
-                <div id="supabaseInputsContainer" class="space-y-2 mt-2 hidden">
+                <div id="supabaseInputsContainer" class="space-y-2 mt-2">
                     <div>
                         <label class="block text-[10px] text-gray-600 mb-0.5">Supabase URL</label>
                         <input type="text" id="sbUrlInput" placeholder="https://xxxx.supabase.co" class="w-full px-2.5 py-1.5 border border-brown-200 rounded-lg text-[11px] bg-white">
@@ -119,7 +119,7 @@
                         <label class="block text-[10px] text-gray-600 mb-0.5">Supabase Anon Key</label>
                         <input type="password" id="sbKeyInput" placeholder="eyJhbGci..." class="w-full px-2.5 py-1.5 border border-brown-200 rounded-lg text-[11px] bg-white">
                     </div>
-                    <button type="button" onclick="saveSupabaseConfig()" class="w-full py-1.5 bg-brown-600 text-white rounded-lg text-[11px] font-medium">บันทึกการตั้งค่า</button>
+                    <button type="button" onclick="saveSupabaseConfig()" class="w-full py-1.5 bg-brown-600 text-white rounded-lg text-[11px] font-medium">บันทึกการตั้งค่า Supabase</button>
                 </div>
             </div>
 
@@ -130,10 +130,10 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">รหัสผ่าน (Password)</label>
-                    <input type="password" id="loginPassword" required value="preem2549" placeholder="••••••••" class="w-full px-3.5 py-2 border border-brown-200 rounded-xl text-xs focus:outline-none focus:border-brown-500">
+                    <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full px-3.5 py-2 border border-brown-200 rounded-xl text-xs focus:outline-none focus:border-brown-500">
                 </div>
                 <button type="submit" class="w-full mt-1 py-2.5 bg-brown-500 hover:bg-brown-600 text-white rounded-xl text-xs font-semibold shadow-md transition flex items-center justify-center gap-2">
-                    <span>เข้าสู่ระบบ Cloud / Offline</span>
+                    <span>เข้าสู่ระบบ Cloud</span>
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </form>
@@ -141,7 +141,7 @@
 
         <div id="loadingView" class="hidden flex flex-col items-center text-center">
             <div class="w-10 h-10 border-4 border-brown-300 border-t-white rounded-full animate-spin mb-3"></div>
-            <p class="text-xs text-white font-medium tracking-wider">กำลังโหลดระบบ...</p>
+            <p class="text-xs text-white font-medium tracking-wider">กำลังซิงค์ฐานข้อมูล Supabase...</p>
         </div>
     </div>
 
@@ -216,10 +216,10 @@
                 <input type="text" id="searchInput" oninput="renderOrders()" placeholder="ค้นชื่อลูกค้า, งาน, เลขออเดอร์..." class="w-full pl-8 pr-3 py-1.5 border border-brown-200 rounded-xl text-xs focus:outline-none focus:border-brown-500 focus:ring-1 focus:ring-brown-500">
             </div>
             <div class="flex gap-1.5 w-full md:w-auto overflow-x-auto pb-0.5 md:pb-0">
-                <button onclick="setFilter('all')" id="filter-all" class="px-3 py-1 rounded-xl text-xs font-medium border bg-brown-500 text-white border-brown-500 whitespace-nowrap">ทั้งหมด</button>
-                <button onclick="setFilter('รอรับคิว')" id="filter-รอรับคิว" class="px-3 py-1 rounded-xl text-xs font-medium border bg-white text-gray-600 border-brown-200 hover:bg-brown-50 whitespace-nowrap">รอรับคิว</button>
-                <button onclick="setFilter('กำลังดำเนินการ')" id="filter-กำลังดำเนินการ" class="px-3 py-1 rounded-xl text-xs font-medium border bg-white text-gray-600 border-brown-200 hover:bg-brown-50 whitespace-nowrap">กำลังทำ</button>
-                <button onclick="setFilter('ส่งงานแล้ว')" id="filter-ส่งงานแล้ว" class="px-3 py-1 rounded-xl text-xs font-medium border bg-white text-gray-600 border-brown-200 hover:bg-brown-50 whitespace-nowrap">ส่งแล้ว</button>
+                <button onclick="withGlobalLoader('กำลังโหลดข้อมูล...', () => setFilter('all'))" id="filter-all" class="px-3 py-1 rounded-xl text-xs font-medium border bg-brown-500 text-white border-brown-500 whitespace-nowrap">ทั้งหมด</button>
+                <button onclick="withGlobalLoader('กำลังโหลดข้อมูล...', () => setFilter('รอรับคิว'))" id="filter-รอรับคิว" class="px-3 py-1 rounded-xl text-xs font-medium border bg-white text-gray-600 border-brown-200 hover:bg-brown-50 whitespace-nowrap">รอรับคิว</button>
+                <button onclick="withGlobalLoader('กำลังโหลดข้อมูล...', () => setFilter('กำลังดำเนินการ'))" id="filter-กำลังดำเนินการ" class="px-3 py-1 rounded-xl text-xs font-medium border bg-white text-gray-600 border-brown-200 hover:bg-brown-50 whitespace-nowrap">กำลังทำ</button>
+                <button onclick="withGlobalLoader('กำลังโหลดข้อมูล...', () => setFilter('ส่งงานแล้ว'))" id="filter-ส่งงานแล้ว" class="px-3 py-1 rounded-xl text-xs font-medium border bg-white text-gray-600 border-brown-200 hover:bg-brown-50 whitespace-nowrap">ส่งแล้ว</button>
             </div>
         </div>
 
@@ -246,7 +246,7 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">เลขออเดอร์</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">เลขออเดอร์ (พิมพ์ตัวเลขต่อท้ายเอง)</label>
                         <input type="text" id="lineOrderNo" required class="w-full px-3.5 py-2 bg-white border border-brown-200 rounded-xl text-xs font-bold text-brown-700 focus:outline-none focus:border-brown-500">
                     </div>
                     <div>
@@ -325,9 +325,9 @@
                         <input type="date" id="revenueDatePicker" onchange="calculateDailyRevenue()" class="w-full sm:w-auto px-3 py-1.5 border border-brown-200 rounded-xl text-xs font-semibold text-brown-700 bg-white focus:outline-none focus:border-brown-500">
                     </div>
                     <div class="flex gap-1.5 w-full sm:w-auto justify-end">
-                        <button onclick="setRevenueQuickDate('today')" class="px-3 py-1.5 bg-white border border-brown-200 text-gray-600 rounded-xl text-xs hover:bg-brown-100 font-medium">วันนี้</button>
-                        <button onclick="setRevenueQuickDate('yesterday')" class="px-3 py-1.5 bg-white border border-brown-200 text-gray-600 rounded-xl text-xs hover:bg-brown-100 font-medium">เมื่อวาน</button>
-                        <button onclick="setRevenueQuickDate('all')" class="px-3 py-1.5 bg-brown-500 text-white rounded-xl text-xs font-medium">ทั้งหมด</button>
+                        <button onclick="withGlobalLoader('กำลังโหลดข้อมูล...', () => setRevenueQuickDate('today'))" class="px-3 py-1.5 bg-white border border-brown-200 text-gray-600 rounded-xl text-xs hover:bg-brown-100 font-medium">วันนี้</button>
+                        <button onclick="withGlobalLoader('กำลังโหลดข้อมูล...', () => setRevenueQuickDate('yesterday'))" class="px-3 py-1.5 bg-white border border-brown-200 text-gray-600 rounded-xl text-xs hover:bg-brown-100 font-medium">เมื่อวาน</button>
+                        <button onclick="withGlobalLoader('กำลังโหลดข้อมูล...', () => setRevenueQuickDate('all'))" class="px-3 py-1.5 bg-brown-500 text-white rounded-xl text-xs font-medium">ทั้งหมด</button>
                     </div>
                 </div>
 
@@ -377,18 +377,15 @@
         </div>
     </div>
 
-    <script>
+   <script>
+        // Supabase Initialization & Configuration
         let supabaseUrl = localStorage.getItem('sb_url') || 'https://zlumthwpdgcnyvigygyu.supabase.co';[cite: 7]
         let supabaseKey = localStorage.getItem('sb_key') || 'sb_publishable_7lEXqG9AhC_hSSAVhUMViw_qDM84Giu';[cite: 7]
         let supabaseClient = null;
 
         function initSupabase() {
             if (supabaseUrl && supabaseKey && window.supabase) {
-                try {
-                    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-                } catch (e) {
-                    console.error('Supabase init error:', e);
-                }
+                supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
             }
         }
 
@@ -404,25 +401,25 @@
                 localStorage.setItem('sb_url', supabaseUrl);
                 localStorage.setItem('sb_key', supabaseKey);
                 initSupabase();
-                showToast('บันทึกการตั้งค่าเรียบร้อย');
+                showToast('บันทึกการตั้งค่า Supabase เรียบร้อยแล้ว');
             } else {
-                showToast('กรุณากรอกข้อมูลให้ครบ', 'warning');
+                showToast('กรุณากรอก URL และ Anon Key ให้ครบถ้วน', 'warning');
             }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            const urlInput = document.getElementById('sbUrlInput');
-            const keyInput = document.getElementById('sbKeyInput');
-            if(urlInput) urlInput.value = supabaseUrl;
-            if(keyInput) keyInput.value = supabaseKey;
+            document.getElementById('sbUrlInput').value = supabaseUrl;
+            document.getElementById('sbKeyInput').value = supabaseKey;
             initSupabase();
 
-            setTimeout(() => {
-                const splash = document.getElementById('splashView');
-                const loginBox = document.getElementById('loginBox');
-                if(splash) splash.classList.add('hidden');
-                if(loginBox) loginBox.classList.remove('hidden');
-            }, 1000);
+            // ข้ามหน้า Login เข้าสู่ระบบคิวงานหลักทันทีโดยอัตโนมัติ
+            const authScreen = document.getElementById('authScreen');
+            authScreen.classList.add('hidden');
+            
+            // โหลดข้อมูลเริ่มต้น
+            orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
+            renderOrders();
+            fetchOrdersFromSupabase();
         });
 
         function getLocalToday() {
@@ -439,50 +436,70 @@
 
         function withGlobalLoader(loadingText = 'กำลังโหลด...', callback) {
             const loader = document.getElementById('globalLoader');
-            const textElem = document.getElementById('globalLoaderText');
-            if(textElem) textElem.innerText = loadingText;
-            if(loader) loader.classList.remove('hidden');
+            document.getElementById('globalLoaderText').innerText = loadingText;
+
+            loader.classList.remove('hidden');
 
             setTimeout(() => {
-                if(loader) loader.classList.add('hidden');
+                loader.classList.add('hidden');
                 if (callback && typeof callback === 'function') {
                     callback();
                 }
-            }, 250);
+            }, 300);
         }
 
         async function handleLogin(e) {
             e.preventDefault();
-            
-            const loginBox = document.getElementById('loginBox');
-            const loadingView = document.getElementById('loadingView');
-            const authScreen = document.getElementById('authScreen');
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPassword').value.trim();
 
-            if(loginBox) loginBox.classList.add('hidden');
-            if(loadingView) loadingView.classList.remove('hidden');
-
-            try {
-                if (supabaseClient) {
-                    await fetchOrdersFromSupabase();
-                } else {
-                    orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
-                }
-            } catch (err) {
-                orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
+            if (!supabaseClient) {
+                showToast('ยังไม่ได้ตั้งค่า Supabase URL และ Key', 'warning');
+                return;
             }
 
-            setTimeout(() => {
-                if(authScreen) authScreen.classList.add('hidden');
-                renderOrders();
-                showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับค่ะ Preem');
-            }, 600);
+            document.getElementById('loginBox').classList.add('hidden');
+            document.getElementById('loadingView').classList.remove('hidden');
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: pass,
+                });
+
+                if (error) {
+                    const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+                        email: email,
+                        password: pass,
+                    });
+                    if (signUpError) {
+                        throw signUpError;
+                    }
+                }
+
+                await fetchOrdersFromSupabase();
+
+                const authScreen = document.getElementById('authScreen');
+                authScreen.classList.add('hidden');
+                showToast('เข้าสู่ระบบ Supabase สำเร็จ ยินดีต้อนรับค่ะ Preem');
+
+            } catch (err) {
+                if (email === 'preem.ptn@gmail.com' && pass === 'preem2549') {
+                    orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
+                    const authScreen = document.getElementById('authScreen');
+                    authScreen.classList.add('hidden');
+                    renderOrders();
+                    showToast('เข้าสู่ระบบสำเร็จ (Offline Mode)');
+                } else {
+                    document.getElementById('loadingView').classList.add('hidden');
+                    document.getElementById('loginBox').classList.remove('hidden');
+                    showToast('เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ' + (err.message || 'โปรดตรวจสอบรหัสผ่าน'), 'warning');
+                }
+            }
         }
 
         async function fetchOrdersFromSupabase() {
-            if (!supabaseClient) {
-                orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
-                return;
-            }
+            if (!supabaseClient) return;
             try {
                 const { data, error } = await supabaseClient
                     .from('orders')
@@ -490,9 +507,10 @@
                     .order('created_at', { ascending: false })
                     .limit(50);
 
-                if (error || !data) {
+                if (error) {
+                    console.error('Supabase fetch error:', error);
                     orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
-                } else {
+                } else if (data && data.length > 0) {
                     orders = data.map(item => ({
                         id: item.id.toString(),
                         customerName: item.customer_name,
@@ -508,13 +526,14 @@
                     }));
                 }
             } catch (err) {
+                console.error('Fetch exception:', err);
                 orders = JSON.parse(localStorage.getItem('freelance_orders')) || [];
             }
+            renderOrders();
         }
 
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
-            if(!container) return;
             const toast = document.createElement('div');
             
             const isSuccess = type === 'success';
@@ -550,25 +569,20 @@
             document.getElementById('confirmModal').classList.add('hidden');
         }
 
-        const btnConfirmDelete = document.getElementById('btnConfirmDelete');
-        if(btnConfirmDelete) {
-            btnConfirmDelete.onclick = async function() {
-                withGlobalLoader('กำลังลบคิวงาน...', async () => {
-                    if(deleteTargetId) {
-                        if (supabaseClient) {
-                            try {
-                                await supabaseClient.from('orders').delete().eq('id', deleteTargetId);
-                            } catch(e) {}
-                        }
-                        orders = orders.filter(o => o.id !== deleteTargetId);
-                        localStorage.setItem('freelance_orders', JSON.stringify(orders));
-                        renderOrders();
-                        showToast('ลบคิวงานเรียบร้อยแล้ว', 'warning');
+        document.getElementById('btnConfirmDelete').onclick = async function() {
+            withGlobalLoader('กำลังลบคิวงาน...', async () => {
+                if(deleteTargetId) {
+                    if (supabaseClient) {
+                        await supabaseClient.from('orders').delete().eq('id', deleteTargetId);
                     }
-                    closeConfirmModal();
-                });
-            };
-        }
+                    orders = orders.filter(o => o.id !== deleteTargetId);
+                    localStorage.setItem('freelance_orders', JSON.stringify(orders));
+                    renderOrders();
+                    showToast('ลบคิวงานเรียบร้อยแล้ว', 'warning');
+                }
+                closeConfirmModal();
+            });
+        };
 
         function generateNextOrderNo(targetDateStr) {
             const count = orders.length + 1;
@@ -576,10 +590,8 @@
         }
 
         function renderOrders() {
-            const searchInput = document.getElementById('searchInput');
-            const search = searchInput ? searchInput.value.toLowerCase() : '';
+            const search = document.getElementById('searchInput').value.toLowerCase();
             const container = document.getElementById('orderList');
-            if(!container) return;
             container.innerHTML = '';
 
             const filtered = orders.filter(o => {
@@ -637,13 +649,13 @@
                     </div>
 
                     <div class="pt-2.5 mt-2.5 border-t border-gray-100 flex gap-1.5 items-center">
-                        <button onclick="copyLineSummary('${o.id}')" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-1.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 shadow-sm transition">
+                        <button onclick="withGlobalLoader('กำลังคัดลอกสรุปงาน...', () => copyLineSummary('${o.id}'))" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-1.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 shadow-sm transition">
                             <i data-lucide="share-2" class="w-3.5 h-3.5"></i> LINE
                         </button>
-                        <button onclick="editOrder('${o.id}')" class="p-1.5 border border-brown-200 text-brown-600 hover:bg-brown-50 rounded-xl transition" title="แก้ไข">
+                        <button onclick="withGlobalLoader('กำลังโหลดข้อมูลแก้ไข...', () => editOrder('${o.id}'))" class="p-1.5 border border-brown-200 text-brown-600 hover:bg-brown-50 rounded-xl transition" title="แก้ไขคิวงาน">
                             <i data-lucide="edit-2" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="openConfirmModal('${o.id}')" class="p-1.5 border border-brown-200 text-brown-400 hover:bg-brown-50 rounded-xl transition" title="ลบ">
+                        <button onclick="openConfirmModal('${o.id}')" class="p-1.5 border border-brown-200 text-brown-400 hover:bg-brown-50 rounded-xl transition" title="ลบคิวงาน">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -687,7 +699,7 @@
 
         async function saveOrder(e) {
             e.preventDefault();
-            withGlobalLoader('กำลังบันทึกข้อมูล...', async () => {
+            withGlobalLoader('กำลังบันทึกข้อมูลคิวงาน...', async () => {
                 const id = document.getElementById('orderId').value || Date.now().toString();
                 const orderData = {
                     id: isNaN(id) ? id : Number(id),
@@ -704,9 +716,12 @@
                 };
 
                 if (supabaseClient) {
-                    try {
-                        await supabaseClient.from('orders').upsert(orderData);
-                    } catch(err) {}
+                    const { error } = await supabaseClient
+                        .from('orders')
+                        .upsert(orderData);
+                    if (error) {
+                        console.error('Supabase save error:', error);
+                    }
                 }
 
                 const localOrderObj = {
@@ -731,7 +746,7 @@
                 }
 
                 localStorage.setItem('freelance_orders', JSON.stringify(orders));
-                showToast('บันทึกคิวงานเรียบร้อยแล้ว');
+                showToast('บันทึกข้อมูลคิวงานเรียบร้อยแล้ว');
 
                 toggleModal();
                 renderOrders();
@@ -760,28 +775,17 @@
 
         function setFilter(status) {
             currentFilter = status;
-            ['all', 'รอรับคิว', 'กำลังดำเนินการ', 'ส่งงานแล้ว'].forEach(s => {
-                const btn = document.getElementById(`filter-${s}`);
-                if(btn) {
-                    if(s === status) {
-                        btn.className = "px-3 py-1 rounded-xl text-xs font-medium border bg-brown-500 text-white border-brown-500 whitespace-nowrap";
-                    } else {
-                        btn.className = "px-3 py-1 rounded-xl text-xs font-medium border bg-white text-gray-600 border-brown-200 hover:bg-brown-50 whitespace-nowrap";
-                    }
-                }
+            document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+                btn.className = "px-3 py-1 rounded-xl text-xs font-medium border bg-white text-gray-600 border-brown-200 hover:bg-brown-50 whitespace-nowrap";
             });
+            document.getElementById(`filter-${status}`).className = "px-3 py-1 rounded-xl text-xs font-medium border bg-brown-500 text-white border-brown-500 whitespace-nowrap";
             renderOrders();
         }
 
         function updateStats() {
-            const statTotal = document.getElementById('stat-total');
-            const statPending = document.getElementById('stat-pending');
-            const statDone = document.getElementById('stat-done');
-            const statIncome = document.getElementById('stat-today-income');
-
-            if(statTotal) statTotal.innerText = orders.length;
-            if(statPending) statPending.innerText = orders.filter(o => o.status === 'กำลังดำเนินการ' || o.status === 'รอรับคิว').length;
-            if(statDone) statDone.innerText = orders.filter(o => o.status === 'ส่งงานแล้ว').length;
+            document.getElementById('stat-total').innerText = orders.length;
+            document.getElementById('stat-pending').innerText = orders.filter(o => o.status === 'กำลังดำเนินการ' || o.status === 'รอรับคิว').length;
+            document.getElementById('stat-done').innerText = orders.filter(o => o.status === 'ส่งงานแล้ว').length;
             
             const todayStr = getLocalToday();
             const todayIncome = orders.reduce((sum, o) => {
@@ -791,10 +795,9 @@
                 return sum;
             }, 0);
 
-            if(statIncome) statIncome.innerText = `${todayIncome.toLocaleString()} บาท`;
+            document.getElementById('stat-today-income').innerText = `${todayIncome.toLocaleString()} บาท`;
 
-            const revModal = document.getElementById('revenueModal');
-            if (revModal && !revModal.classList.contains('hidden')) {
+            if (!document.getElementById('revenueModal').classList.contains('hidden')) {
                 calculateDailyRevenue();
             }
         }
@@ -804,7 +807,7 @@
             modal.classList.toggle('hidden');
             if (!modal.classList.contains('hidden')) {
                 const datePicker = document.getElementById('revenueDatePicker');
-                if (datePicker && !datePicker.value) {
+                if (!datePicker.value) {
                     datePicker.value = getLocalToday();
                 }
                 calculateDailyRevenue();
@@ -813,7 +816,6 @@
 
         function setRevenueQuickDate(type) {
             const datePicker = document.getElementById('revenueDatePicker');
-            if(!datePicker) return;
             if (type === 'today') {
                 datePicker.value = getLocalToday();
             } else if (type === 'yesterday') {
@@ -830,10 +832,8 @@
         }
 
         function calculateDailyRevenue() {
-            const datePicker = document.getElementById('revenueDatePicker');
-            const selectedDate = datePicker ? datePicker.value : '';
+            const selectedDate = document.getElementById('revenueDatePicker').value;
             const container = document.getElementById('revenueOrderBreakdown');
-            if(!container) return;
             container.innerHTML = '';
 
             const filtered = orders.filter(o => {
@@ -852,15 +852,10 @@
                 totalBalance += Number(o.balance || 0);
             });
 
-            const revTotal = document.getElementById('rev-total-amount');
-            const revDeposit = document.getElementById('rev-deposit-amount');
-            const revBalance = document.getElementById('rev-balance-amount');
-            const revCount = document.getElementById('rev-order-count');
-
-            if(revTotal) revTotal.innerText = `${totalSales.toLocaleString()} บาท`;
-            if(revDeposit) revDeposit.innerText = `${totalDeposit.toLocaleString()} บาท`;
-            if(revBalance) revBalance.innerText = `${totalBalance.toLocaleString()} บาท`;
-            if(revCount) revCount.innerText = `${filtered.length} รายการ`;
+            document.getElementById('rev-total-amount').innerText = `${totalSales.toLocaleString()} บาท`;
+            document.getElementById('rev-deposit-amount').innerText = `${totalDeposit.toLocaleString()} บาท`;
+            document.getElementById('rev-balance-amount').innerText = `${totalBalance.toLocaleString()} บาท`;
+            document.getElementById('rev-order-count').innerText = `${filtered.length} รายการ`;
 
             if (filtered.length === 0) {
                 container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs">ไม่พบยอดขายหรือรายการสั่งงานในวันที่เลือก</div>`;
@@ -897,7 +892,7 @@
                          `----------------------------\n` +
                          `🛒 เลขคิวออเดอร์: คิวที่ ${o.lineOrderNo || 'PMS-'}\n` +
                          `📝 งาน: ${o.jobDetail}\n` +
-                         `📅 วันที่สั่งงาน: ${formatDateOnly(o.orderDate)}\n` +
+                         `📅 วันที่สั่งงาน: ${formatDateOnly(o.orderData || o.orderDate)}\n` +
                          `⏰ กำหนดส่งงาน: ${o.dueDate ? formatDateOnly(o.dueDate) : 'ไม่ระบุ'}\n` +
                          `----------------------------\n` +
                          `💰 ยอดรวม: ${Number(o.totalAmount || 0).toLocaleString()} บาท\n` +
