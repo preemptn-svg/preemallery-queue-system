@@ -707,22 +707,22 @@
         };
 
         function generateNextOrderNo(targetDateStr) {
-            const dateStr = targetDateStr || getLocalToday();
-            let maxNum = 0;
-            orders.forEach(o => {
-                if (o.orderDate === dateStr && o.lineOrderNo) {
-                    // ตัดตัวอักษรออกเพื่อให้เหลือแต่ตัวเลขสำหรับคำนวณหาค่ามากที่สุด
-                    const cleanNumStr = o.lineOrderNo.replace(/[^0-9]/g, '');
-                    const numPart = parseInt(cleanNumStr, 10);
-                    if (!isNaN(numPart) && numPart > maxNum) {
-                        maxNum = numPart;
-                    }
-                }
-            });
-            const nextNumStr = String(maxNum + 1).padStart(3, '0');
-            return `PMS-${nextNumStr}`;
+    const dateStr = targetDateStr || getLocalToday();
+    let maxNum = 0;
+    orders.forEach(o => {
+        if (o.orderDate === dateStr && o.lineOrderNo) {
+            // ตัดเอาเฉพาะส่วนที่เป็นตัวเลขหลังเครื่องหมายขีด เช่น "PMS-001" -> "001"
+            const parts = o.lineOrderNo.split('-');
+            const numStr = parts.length > 1 ? parts[1] : o.lineOrderNo;
+            const numPart = parseInt(numStr, 10);
+            
+            if (!isNaN(numPart) && numPart > maxNum) {
+                maxNum = numPart;
+            }
         }
-
+    });
+    return String(maxNum + 1).padStart(3, '0');
+}
         function renderOrders() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const container = document.getElementById('orderList');
